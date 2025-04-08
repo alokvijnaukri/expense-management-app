@@ -9,7 +9,7 @@ import RejectedClaims from "@/pages/rejected-claims";
 import ApprovalQueue from "@/pages/approval-queue";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
-import { useUser, UserProvider } from "@/components/auth/UserProvider";
+import { useUser, UserProvider } from "./components/auth/UserProvider";
 
 function Router() {
   const { user } = useUser();

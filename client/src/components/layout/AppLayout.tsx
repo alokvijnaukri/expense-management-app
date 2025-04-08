@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { useUser } from "@/components/auth/UserProvider";
+import { useUser } from "../../components/auth/UserProvider";
 import { Loader2 } from "lucide-react";
 
 interface AppLayoutProps {

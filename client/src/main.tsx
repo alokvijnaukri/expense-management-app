@@ -8,10 +8,8 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Strict mode disabled for development to avoid duplicate useEffect calls
 createRoot(document.getElementById("root")!).render(
-  <UserProvider>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      <Toaster />
-    </QueryClientProvider>
-  </UserProvider>
+  <QueryClientProvider client={queryClient}>
+    <App />
+    <Toaster />
+  </QueryClientProvider>
 );

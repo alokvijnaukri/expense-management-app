@@ -34,8 +34,17 @@ export default function ApprovalQueue() {
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Safe formatting helper functions to prevent undefined errors
+  const safeFormatCurrency = (amount: any) => {
+    return amount !== undefined ? formatCurrency(amount) : '-';
+  };
+  
+  const safeGetClaimTypeName = (type: any) => {
+    return type !== undefined ? getClaimTypeName(type) : '-';
+  };
 
-  const { data: claimsForApproval, isLoading: isLoadingApprovals } = useQuery({
+  const { data: claimsForApproval = [], isLoading: isLoadingApprovals } = useQuery({
     queryKey: ["/api/claims/approval", user?.id],
     queryFn: async () => {
       const res = await fetch(`/api/claims/approval?approverId=${user?.id}`);
@@ -176,7 +185,7 @@ export default function ApprovalQueue() {
           <div className="flex items-center space-x-2">
             <DollarSign className="h-5 w-5 text-neutral-500" />
             <span className="text-sm text-neutral-600">
-              <strong>Amount:</strong> {formatCurrency(selectedClaim.totalAmount)}
+              <strong>Amount:</strong> {safeFormatCurrency(selectedClaim.totalAmount)}
             </span>
           </div>
         </div>
@@ -276,7 +285,7 @@ export default function ApprovalQueue() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-neutral-500">Amount:</span>
-                        <span className="text-sm font-medium">{formatCurrency(claim.totalAmount)}</span>
+                        <span className="text-sm font-medium">{safeFormatCurrency(claim.totalAmount)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-neutral-500">Submitted:</span>

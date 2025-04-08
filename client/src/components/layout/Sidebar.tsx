@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, Link } from "wouter";
-import { useUser } from "@/components/auth/UserProvider";
+import { useUser } from "../../components/auth/UserProvider";
 import {
   HomeIcon,
   PlusCircleIcon,

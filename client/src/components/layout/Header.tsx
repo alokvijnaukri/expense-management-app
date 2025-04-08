@@ -1,5 +1,5 @@
 import React from "react";
-import { useUser } from "@/components/auth/UserProvider";
+import { useUser } from "../../components/auth/UserProvider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
   ChevronDownIcon,
   MenuIcon,
 } from "lucide-react";
-import { type UserRole } from "@/components/auth/UserProvider";
+import { type UserRole } from "../../components/auth/UserProvider";
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -31,7 +31,9 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
   const { user, logout, switchRole } = useUser();
 
   const handleRoleChange = (role: string) => {
-    switchRole(role as UserRole);
+    if (typeof switchRole === 'function') {
+      switchRole(role as UserRole);
+    }
   };
 
   return (
