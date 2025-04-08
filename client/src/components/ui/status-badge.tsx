@@ -1,52 +1,42 @@
-import React from "react";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { getStatusColor } from "@/lib/utils";
+import { ClaimStatus } from "@shared/schema";
 
 interface StatusBadgeProps {
   status: string;
-  className?: string;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const getStatusStyles = () => {
-    switch (status.toLowerCase()) {
-      case "draft":
-        return "bg-neutral-100 text-neutral-700";
-      case "submitted":
-      case "pending":
-        return "bg-amber-100 text-amber-700";
-      case "approved":
-      case "paid":
-        return "bg-green-100 text-green-700";
-      case "rejected":
-        return "bg-red-100 text-red-700";
-      case "processing":
-        return "bg-blue-100 text-blue-700";
-      default:
-        return "bg-neutral-100 text-neutral-700";
-    }
-  };
-
-  const statusMap: Record<string, string> = {
-    draft: "Draft",
-    submitted: "Pending",
-    pending: "Pending",
-    approved: "Approved",
-    rejected: "Rejected",
-    processing: "Processing",
-    paid: "Paid",
-  };
-
-  const displayText = statusMap[status.toLowerCase()] || status;
+export function StatusBadge({ status }: StatusBadgeProps) {
+  const { textColor, bgColor } = getStatusColor(status);
+  
+  // Map the status to a more readable form
+  let displayStatus = "";
+  switch (status) {
+    case ClaimStatus.DRAFT:
+      displayStatus = "Draft";
+      break;
+    case ClaimStatus.SUBMITTED:
+      displayStatus = "Pending";
+      break;
+    case ClaimStatus.APPROVED:
+      displayStatus = "Approved";
+      break;
+    case ClaimStatus.REJECTED:
+      displayStatus = "Rejected";
+      break;
+    case ClaimStatus.PROCESSING:
+      displayStatus = "Processing";
+      break;
+    case ClaimStatus.PAID:
+      displayStatus = "Paid";
+      break;
+    default:
+      displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+  }
 
   return (
-    <span
-      className={cn(
-        "px-2 py-1 text-xs font-medium rounded-full",
-        getStatusStyles(),
-        className
-      )}
-    >
-      {displayText}
-    </span>
+    <Badge className={`${bgColor} ${textColor} font-medium`}>
+      {displayStatus}
+    </Badge>
   );
 }

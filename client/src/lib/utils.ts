@@ -84,19 +84,40 @@ export function getClaimTypeName(type: string | undefined) {
 export function getStatusColor(status: string) {
   switch (status) {
     case 'draft':
-      return 'neutral';
+      return {
+        bgColor: 'bg-neutral-100',
+        textColor: 'text-neutral-600'
+      };
     case 'submitted':
-      return 'warning';
+      return {
+        bgColor: 'bg-amber-100',
+        textColor: 'text-amber-700'
+      };
     case 'approved':
-      return 'secondary';
+      return {
+        bgColor: 'bg-green-100',
+        textColor: 'text-green-700'
+      };
     case 'rejected':
-      return 'danger';
+      return {
+        bgColor: 'bg-red-100',
+        textColor: 'text-red-700'
+      };
     case 'processing':
-      return 'primary';
+      return {
+        bgColor: 'bg-blue-100',
+        textColor: 'text-blue-700'
+      };
     case 'paid':
-      return 'secondary';
+      return {
+        bgColor: 'bg-emerald-100',
+        textColor: 'text-emerald-700'
+      };
     default:
-      return 'neutral';
+      return {
+        bgColor: 'bg-neutral-100',
+        textColor: 'text-neutral-600'
+      };
   }
 }
 

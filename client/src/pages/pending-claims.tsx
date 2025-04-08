@@ -23,12 +23,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import ClaimDetailsModal from "@/components/claims/ClaimDetailsModal";
 
 export default function PendingClaims() {
   const { user } = useUser();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: claims, isLoading } = useQuery({
     queryKey: ["/api/claims", user?.id],
@@ -47,9 +50,12 @@ export default function PendingClaims() {
   });
 
   const handleViewClick = (claim: any) => {
+    setSelectedClaim(claim);
+    setIsModalOpen(true);
+    
     toast({
-      title: "View Claim",
-      description: `Viewing claim ${claim.claimId}`,
+      title: "Viewing Claim",
+      description: `Details for claim ${claim.claimId}`,
     });
   };
 
@@ -76,6 +82,13 @@ export default function PendingClaims() {
 
   return (
     <div className="p-6">
+      {/* Claim Details Modal */}
+      <ClaimDetailsModal 
+        claim={selectedClaim} 
+        open={isModalOpen} 
+        onOpenChange={setIsModalOpen} 
+      />
+
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-semibold text-neutral-700 mb-2">Pending Claims</h2>

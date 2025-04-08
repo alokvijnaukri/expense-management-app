@@ -12,23 +12,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import ClaimDetailsModal from "@/components/claims/ClaimDetailsModal";
 
 export default function RecentClaims() {
   const { user } = useUser();
   const { toast } = useToast();
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("30");
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: claims, isLoading } = useQuery({
     queryKey: ["/api/claims", user?.id],
     enabled: !!user?.id,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const handleViewClick = (claimId: string) => {
-    toast({
-      title: "View Claim",
-      description: `Viewing claim ${claimId}`,
-    });
+    // Find the claim by claimId
+    const claimsArray = Array.isArray(claims) ? claims : [];
+    const claim = claimsArray.find((c: any) => c.claimId === claimId);
+    if (claim) {
+      setSelectedClaim(claim);
+      setIsModalOpen(true);
+      toast({
+        title: "Viewing Claim",
+        description: `Details for claim ${claimId}`,
+      });
+    }
   };
 
   const handleEditClick = (claimId: string) => {
@@ -60,21 +72,27 @@ export default function RecentClaims() {
   };
 
   // Filter and sort claims
-  const filteredClaims = claims
-    ? claims
-        .filter(
-          (claim: any) =>
-            claimTypeFilter === "all" || claim.type === claimTypeFilter
-        )
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        .slice(0, 5)
-    : [];
+  const claimsArray = Array.isArray(claims) ? claims : [];
+  const filteredClaims = claimsArray
+    .filter(
+      (claim: any) =>
+        claimTypeFilter === "all" || claim.type === claimTypeFilter
+    )
+    .sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 5);
 
   return (
     <div className="bg-white rounded-lg shadow-sm mb-8">
+      {/* Claim Details Modal */}
+      <ClaimDetailsModal 
+        claim={selectedClaim} 
+        open={isModalOpen} 
+        onOpenChange={setIsModalOpen} 
+      />
+
       <div className="p-6 border-b border-neutral-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
           <h3 className="text-lg font-semibold text-neutral-700">
@@ -177,7 +195,7 @@ export default function RecentClaims() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {getIconForClaimType(claim.type)}
-                      <span className="text-sm">{claim.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                      <span className="text-sm">{claim.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
@@ -231,7 +249,7 @@ export default function RecentClaims() {
         <div className="text-sm text-neutral-500">
           Showing <span className="font-medium">1</span> to{" "}
           <span className="font-medium">{filteredClaims.length}</span> of{" "}
-          <span className="font-medium">{claims?.length || 0}</span> claims
+          <span className="font-medium">{claimsArray.length || 0}</span> claims
         </div>
         <div className="flex space-x-2">
           <button
