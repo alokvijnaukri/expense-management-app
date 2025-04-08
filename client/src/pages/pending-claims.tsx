@@ -41,6 +41,9 @@ export default function PendingClaims() {
       return allClaims.filter((claim: any) => claim.status === ClaimStatus.SUBMITTED);
     },
     enabled: !!user?.id,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch data every 5 seconds
   });
 
   const handleViewClick = (claim: any) => {
@@ -113,12 +116,12 @@ export default function PendingClaims() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-base">{claim.claimId}</CardTitle>
-                    <CardDescription>
+                    <div className="text-sm text-muted-foreground">
                       <div className="flex items-center mt-1">
                         {getIconForClaimType(claim.type)}
                         <span>{getClaimTypeName(claim.type)}</span>
                       </div>
-                    </CardDescription>
+                    </div>
                   </div>
                   <StatusBadge status={claim.status} />
                 </div>

@@ -111,6 +111,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       claims = await storage.getAllClaims();
     }
 
+    // Set cache-control headers to prevent excessive caching
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     return res.status(200).json(claims);
   });
 
