@@ -173,7 +173,11 @@ export default function ExpenseTable({
                     <input
                       type="number"
                       value={expense.amount || ""}
-                      onChange={(e) => updateExpense(index, "amount", e.target.value)}
+                      onChange={(e) => {
+                        // Explicitly convert string to number
+                        const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                        updateExpense(index, "amount", value);
+                      }}
                       placeholder="0.00"
                       className="w-full rounded-md border border-neutral-300 pl-7 px-3 py-1 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
                     />

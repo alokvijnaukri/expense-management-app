@@ -176,9 +176,13 @@ export default function TravelExpenseForm() {
     if (!result) {
       // Show first error message
       const firstError = Object.keys(form.formState.errors)[0];
+      const errorMessage = firstError 
+        ? String(form.formState.errors[firstError as keyof typeof form.formState.errors]?.message || "")
+        : "Please check all fields";
+      
       toast({
         title: "Validation Error",
-        description: form.formState.errors[firstError]?.message as string || "Please check all fields",
+        description: errorMessage,
         variant: "destructive",
       });
       return;
@@ -391,7 +395,11 @@ export default function TravelExpenseForm() {
                             type="number"
                             placeholder="0.00"
                             className="pl-7"
-                            {...field}
+                            value={field.value}
+                            onChange={(e) => {
+                              // Convert string input to number before setting in form
+                              field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value));
+                            }}
                           />
                         </div>
                       </FormControl>
