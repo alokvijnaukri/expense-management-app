@@ -136,7 +136,7 @@ export default function PendingClaims() {
                   {claim.details.purpose && (
                     <div>
                       <span className="text-sm text-neutral-500">Purpose:</span>
-                      <p className="text-sm mt-1 line-clamp-2">{claim.details.purpose}</p>
+                      <div className="text-sm mt-1 line-clamp-2">{claim.details.purpose}</div>
                     </div>
                   )}
                 </div>
