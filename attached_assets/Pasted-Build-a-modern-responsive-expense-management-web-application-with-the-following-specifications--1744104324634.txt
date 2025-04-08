@@ -1,0 +1,89 @@
+Build a modern, responsive expense management web application with the following specifications:
+
+General Features:
+Built using React for frontend with TailwindCSS for UI styling.
+
+Backend using Node.js + Express, with mock APIs or JSON server for simulation.
+
+Form-based UI with modular components (one component per form type).
+
+Dashboard/home page showing status of user claims (draft, submitted, approved).
+
+Role-based user logic: Employee, Manager, Finance, HR/Admin.
+
+User Management:
+Auto-populate employee details from a master JSON or mock DB:
+
+Name, Department, Designation, Branch, E-Code, Band, Business Unit.
+
+Use Band to dynamically adjust form fields and approval flows.
+
+Forms to Build (Modular Components):
+Travel Expense Form
+
+Destination, travel dates, purpose, travel mode/class.
+
+Dynamic table for detailed expense entries.
+
+Auto-calculation of totals and deduction of travel advances.
+
+Checklist and document upload fields.
+
+Submit > Send for approval > Navision mock integration.
+
+Business Promotion Form
+
+Client name, event date, type of expense (food, gifts, tips).
+
+Total cost, attendees, average cost/person.
+
+Conveyance Claim Form
+
+Time range validation.
+
+Per km calculation based on Band and vehicle type.
+
+Duplicate entry prevention logic.
+
+Mobile Bill Reimbursement
+
+Period, total bill, deductions, GST auto-calc, net claim.
+
+Dropdown for ISD call indicator and bill attachments.
+
+Relocation Expense Form
+
+From/To location, ticket costs, goods transport.
+
+Ticket cost + Goods total calculation.
+
+Other Claims
+
+Expense type, description, amount.
+
+Budget validation for “Staff Welfare” type.
+
+Approval Flow Logic:
+Use Band-based routing for approvers (e.g., Band B3+ required for approval).
+
+Skip-level approval if reporting manager doesn’t meet Band requirement.
+
+After approvals, data flows to “Navision” mock endpoint with:
+
+Employee ID, Claim Type, Approved Amount, Payment Date.
+
+UI Expectations:
+Clean, intuitive layout with tabs or dropdowns for switching between form types.
+
+Toast messages for actions (saved, submitted, errors).
+
+Form validations using React Hook Form or similar.
+
+Save as Draft functionality for incomplete forms.
+
+Bonus Features (Optional):
+Login/Logout simulation.
+
+Timeline of approval journey per claim.
+
+Analytics chart for claimed vs approved amounts.
