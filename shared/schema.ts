@@ -88,7 +88,6 @@ export const insertClaimSchema = createInsertSchema(claims).omit({
   rejectedAt: true,
   paidAt: true,
   approvedAmount: true,
-  currentApproverId: true,
 });
 
 // Approvals Schema
