@@ -31,11 +31,14 @@ export default function PendingClaims() {
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id, ClaimStatus.SUBMITTED],
+    queryKey: ["/api/claims", user?.id],
     queryFn: async () => {
-      const res = await fetch(`/api/claims?userId=${user?.id}&status=${ClaimStatus.SUBMITTED}`);
-      if (!res.ok) throw new Error("Failed to fetch pending claims");
-      return res.json();
+      const res = await fetch(`/api/claims?userId=${user?.id}`);
+      if (!res.ok) throw new Error("Failed to fetch claims");
+      
+      // Filter pending claims on the client side
+      const allClaims = await res.json();
+      return allClaims.filter((claim: any) => claim.status === ClaimStatus.SUBMITTED);
     },
     enabled: !!user?.id,
   });

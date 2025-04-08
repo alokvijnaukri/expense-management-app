@@ -107,6 +107,8 @@ export default function OtherClaimsForm() {
       
       // Invalidate claims query to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
+      // Also invalidate any specific claim status queries
+      queryClient.invalidateQueries({ queryKey: ["/api/claims", user?.id] });
       
       // Navigate to dashboard
       navigate("/");
@@ -174,6 +176,8 @@ export default function OtherClaimsForm() {
       
       // Invalidate claims query to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
+      // Also invalidate any specific claim status queries
+      queryClient.invalidateQueries({ queryKey: ["/api/claims", user?.id] });
       
       // Navigate to dashboard
       navigate("/");
