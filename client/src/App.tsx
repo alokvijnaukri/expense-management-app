@@ -9,27 +9,34 @@ import RejectedClaims from "@/pages/rejected-claims";
 import ApprovalQueue from "@/pages/approval-queue";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
-import { useUser, UserProvider } from "./components/auth/UserProvider";
+import AuthPage from "@/pages/auth-page";
+import { AuthProvider } from "./hooks/use-auth";
+import { ProtectedRoute } from "./lib/protected-route";
+import { useAuth } from "@/hooks/use-auth";
 
 function Router() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const isManager = user?.role === "manager" || user?.role === "finance" || user?.role === "admin";
   const isFinance = user?.role === "finance" || user?.role === "admin";
   const isAdmin = user?.role === "admin";
 
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/new-claim" component={NewClaim} />
-      <Route path="/new-claim/:type" component={NewClaim} />
-      <Route path="/pending-claims" component={PendingClaims} />
-      <Route path="/approved-claims" component={ApprovedClaims} />
-      <Route path="/rejected-claims" component={RejectedClaims} />
+      {/* Auth route */}
+      <Route path="/auth" component={AuthPage} />
+      
+      {/* Protected routes */}
+      <ProtectedRoute path="/" component={Home} />
+      <ProtectedRoute path="/new-claim" component={NewClaim} />
+      <ProtectedRoute path="/new-claim/:type" component={NewClaim} />
+      <ProtectedRoute path="/pending-claims" component={PendingClaims} />
+      <ProtectedRoute path="/approved-claims" component={ApprovedClaims} />
+      <ProtectedRoute path="/rejected-claims" component={RejectedClaims} />
       
       {/* Role-restricted routes */}
-      {isManager && <Route path="/approval-queue" component={ApprovalQueue} />}
-      {isFinance && <Route path="/reports" component={Reports} />}
-      {isAdmin && <Route path="/settings" component={Settings} />}
+      {isManager && <ProtectedRoute path="/approval-queue" component={ApprovalQueue} />}
+      {isFinance && <ProtectedRoute path="/reports" component={Reports} />}
+      {isAdmin && <ProtectedRoute path="/settings" component={Settings} />}
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
@@ -37,13 +44,27 @@ function Router() {
   );
 }
 
+function AppRoutes() {
+  const { user } = useAuth();
+  
+  return (
+    <>
+      {user ? (
+        <AppLayout>
+          <Router />
+        </AppLayout>
+      ) : (
+        <Router />
+      )}
+    </>
+  );
+}
+
 function App() {
   return (
-    <UserProvider>
-      <AppLayout>
-        <Router />
-      </AppLayout>
-    </UserProvider>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
