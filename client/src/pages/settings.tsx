@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -41,10 +43,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Save, Plus, Edit, Trash2 } from "lucide-react";
+import { Loader2, Save, Plus, Edit, Trash2, PlusCircle, MinusCircle } from "lucide-react";
 
 const generalSettingsSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -54,10 +65,61 @@ const generalSettingsSchema = z.object({
   approvalThreshold: z.string().transform(val => parseFloat(val)),
 });
 
+// Define field type enum for better type safety
+const FieldType = {
+  TEXT: "text",
+  NUMBER: "number",
+  DATE: "date",
+  SELECT: "select",
+  TEXTAREA: "textarea",
+  FILE: "file",
+  CHECKBOX: "checkbox"
+} as const;
+
+// Schema for form field edit/creation
+const formFieldSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Field name is required"),
+  label: z.string().min(1, "Field label is required"),
+  type: z.enum([
+    FieldType.TEXT, 
+    FieldType.NUMBER, 
+    FieldType.DATE, 
+    FieldType.SELECT, 
+    FieldType.TEXTAREA, 
+    FieldType.FILE, 
+    FieldType.CHECKBOX
+  ]),
+  required: z.boolean().default(false),
+  placeholder: z.string().optional(),
+  options: z.array(z.object({
+    value: z.string(),
+    label: z.string()
+  })).optional(),
+  defaultValue: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
+  validation: z.object({
+    min: z.number().optional(),
+    max: z.number().optional(),
+    pattern: z.string().optional(),
+    customMessage: z.string().optional()
+  }).optional()
+});
+
+// Schema for the entire form template
+const formTemplateSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(1, "Template name is required"),
+  description: z.string().optional(),
+  fields: z.array(formFieldSchema)
+});
+
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<number | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [isTemplateSubmitting, setIsTemplateSubmitting] = useState(false);
 
   const mockUsersList = [
     { id: 1, name: "Admin User", email: "admin@company.com", role: "admin", department: "Administration" },
@@ -72,6 +134,148 @@ export default function Settings() {
     { id: 3, formType: "Conveyance", threshold: 1000, approvers: "Manager" },
     { id: 4, formType: "Mobile Bill", threshold: 1500, approvers: "Manager" },
     { id: 5, formType: "Relocation", threshold: 10000, approvers: "Manager, Finance, HR" },
+  ];
+  
+  // Mock data for form templates
+  const mockFormTemplates = [
+    { 
+      id: 1, 
+      name: "Travel Expense", 
+      description: "Form for travel related expense claims",
+      fields: [
+        { id: "1", name: "tripPurpose", label: "Trip Purpose", type: "text", required: true, placeholder: "Enter the purpose of your trip" },
+        { id: "2", name: "travelDate", label: "Travel Date", type: "date", required: true },
+        { id: "3", name: "returnDate", label: "Return Date", type: "date", required: true },
+        { id: "4", name: "destination", label: "Destination", type: "text", required: true },
+        { id: "5", name: "travelMode", label: "Mode of Travel", type: "select", required: true, 
+          options: [
+            { value: "air", label: "Air" },
+            { value: "train", label: "Train" },
+            { value: "bus", label: "Bus" },
+            { value: "car", label: "Car" },
+            { value: "others", label: "Others" }
+          ] 
+        },
+        { id: "6", name: "accommodation", label: "Accommodation Expense", type: "number", required: true },
+        { id: "7", name: "foodExpense", label: "Food Expense", type: "number", required: true },
+        { id: "8", name: "localTravel", label: "Local Travel Expense", type: "number", required: true },
+        { id: "9", name: "otherExpense", label: "Other Expenses", type: "number", required: false },
+        { id: "10", name: "totalAmount", label: "Total Amount", type: "number", required: true },
+        { id: "11", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true },
+        { id: "12", name: "additionalInfo", label: "Additional Information", type: "textarea", required: false }
+      ]
+    },
+    { 
+      id: 2, 
+      name: "Business Promotion", 
+      description: "Form for business promotion expense claims",
+      fields: [
+        { id: "1", name: "clientName", label: "Client Name", type: "text", required: true },
+        { id: "2", name: "eventDate", label: "Event Date", type: "date", required: true },
+        { id: "3", name: "eventType", label: "Event Type", type: "select", required: true,
+          options: [
+            { value: "lunch", label: "Business Lunch" },
+            { value: "dinner", label: "Business Dinner" },
+            { value: "gift", label: "Gift" },
+            { value: "others", label: "Others" }
+          ]
+        },
+        { id: "4", name: "location", label: "Location", type: "text", required: true },
+        { id: "5", name: "purpose", label: "Business Purpose", type: "textarea", required: true },
+        { id: "6", name: "amount", label: "Amount Spent", type: "number", required: true },
+        { id: "7", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true },
+        { id: "8", name: "additionalInfo", label: "Additional Information", type: "textarea", required: false }
+      ]
+    },
+    { 
+      id: 3, 
+      name: "Conveyance Claim", 
+      description: "Form for local transportation expense claims",
+      fields: [
+        { id: "1", name: "date", label: "Date", type: "date", required: true },
+        { id: "2", name: "fromLocation", label: "From Location", type: "text", required: true },
+        { id: "3", name: "toLocation", label: "To Location", type: "text", required: true },
+        { id: "4", name: "purpose", label: "Purpose", type: "text", required: true },
+        { id: "5", name: "modeOfTransport", label: "Mode of Transport", type: "select", required: true,
+          options: [
+            { value: "taxi", label: "Taxi" },
+            { value: "auto", label: "Auto Rickshaw" },
+            { value: "bus", label: "Bus" },
+            { value: "metro", label: "Metro" },
+            { value: "own", label: "Own Vehicle" },
+            { value: "others", label: "Others" }
+          ]
+        },
+        { id: "6", name: "distance", label: "Distance (KM)", type: "number", required: false },
+        { id: "7", name: "amount", label: "Amount", type: "number", required: true },
+        { id: "8", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: false },
+        { id: "9", name: "remarks", label: "Remarks", type: "textarea", required: false }
+      ]
+    },
+    { 
+      id: 4, 
+      name: "Mobile Bill", 
+      description: "Form for mobile bill reimbursement claims",
+      fields: [
+        { id: "1", name: "billingMonth", label: "Billing Month", type: "select", required: true,
+          options: [
+            { value: "jan", label: "January" },
+            { value: "feb", label: "February" },
+            { value: "mar", label: "March" },
+            { value: "apr", label: "April" },
+            { value: "may", label: "May" },
+            { value: "jun", label: "June" },
+            { value: "jul", label: "July" },
+            { value: "aug", label: "August" },
+            { value: "sep", label: "September" },
+            { value: "oct", label: "October" },
+            { value: "nov", label: "November" },
+            { value: "dec", label: "December" }
+          ]
+        },
+        { id: "2", name: "mobileNumber", label: "Mobile Number", type: "text", required: true },
+        { id: "3", name: "billDate", label: "Bill Date", type: "date", required: true },
+        { id: "4", name: "billAmount", label: "Bill Amount", type: "number", required: true },
+        { id: "5", name: "claimAmount", label: "Claim Amount", type: "number", required: true },
+        { id: "6", name: "billAttached", label: "Bill Attached", type: "checkbox", required: true },
+        { id: "7", name: "remarks", label: "Remarks", type: "textarea", required: false }
+      ]
+    },
+    { 
+      id: 5, 
+      name: "Relocation Expense", 
+      description: "Form for relocation expense claims",
+      fields: [
+        { id: "1", name: "relocationType", label: "Relocation Type", type: "select", required: true,
+          options: [
+            { value: "domestic", label: "Domestic" },
+            { value: "international", label: "International" }
+          ]
+        },
+        { id: "2", name: "fromLocation", label: "From Location", type: "text", required: true },
+        { id: "3", name: "toLocation", label: "To Location", type: "text", required: true },
+        { id: "4", name: "relocateDate", label: "Relocation Date", type: "date", required: true },
+        { id: "5", name: "travelExpense", label: "Travel Expense", type: "number", required: true },
+        { id: "6", name: "packingExpense", label: "Packing & Moving Expense", type: "number", required: true },
+        { id: "7", name: "temporaryStay", label: "Temporary Stay Expense", type: "number", required: false },
+        { id: "8", name: "otherExpense", label: "Other Expenses", type: "number", required: false },
+        { id: "9", name: "totalAmount", label: "Total Amount", type: "number", required: true },
+        { id: "10", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true }
+      ]
+    },
+    { 
+      id: 6, 
+      name: "Other Claims", 
+      description: "Form for miscellaneous expense claims",
+      fields: [
+        { id: "1", name: "expenseDate", label: "Expense Date", type: "date", required: true },
+        { id: "2", name: "expenseType", label: "Expense Type", type: "text", required: true },
+        { id: "3", name: "vendor", label: "Vendor/Payee", type: "text", required: true },
+        { id: "4", name: "purpose", label: "Purpose", type: "textarea", required: true },
+        { id: "5", name: "amount", label: "Amount", type: "number", required: true },
+        { id: "6", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true }
+      ]
+    }
   ];
 
   const generalSettingsForm = useForm<z.infer<typeof generalSettingsSchema>>({
@@ -106,6 +310,68 @@ export default function Settings() {
     { value: "EUR", label: "Euro (€)" },
     { value: "GBP", label: "British Pound (£)" },
   ];
+  
+  // Set up form template editing functionality
+  const [currentTemplate, setCurrentTemplate] = useState<z.infer<typeof formTemplateSchema> | null>(null);
+  
+  const templateForm = useForm<z.infer<typeof formTemplateSchema>>({
+    resolver: zodResolver(formTemplateSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      fields: []
+    }
+  });
+  
+  // Function to handle opening the template editor dialog
+  const handleEditTemplate = (templateId: number) => {
+    const template = mockFormTemplates.find(t => t.id === templateId);
+    if (template) {
+      setEditingTemplate(templateId);
+      setCurrentTemplate(template);
+      templateForm.reset(template);
+      setTemplateDialogOpen(true);
+    }
+  };
+  
+  // Function to handle saving template changes
+  const handleSaveTemplate = async (values: z.infer<typeof formTemplateSchema>) => {
+    setIsTemplateSubmitting(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsTemplateSubmitting(false);
+      setTemplateDialogOpen(false);
+      
+      toast({
+        title: "Template Saved",
+        description: `The ${values.name} template has been updated successfully.`,
+      });
+      
+      console.log("Template saved:", values);
+    }, 1000);
+  };
+  
+  // Add field to template
+  const handleAddField = () => {
+    const fields = templateForm.getValues("fields");
+    const newField = { 
+      id: `new-${fields.length + 1}`, 
+      name: "", 
+      label: "", 
+      type: "text" as const, 
+      required: false 
+    };
+    
+    templateForm.setValue("fields", [...fields, newField]);
+  };
+  
+  // Remove field from template
+  const handleRemoveField = (index: number) => {
+    const fields = templateForm.getValues("fields");
+    fields.splice(index, 1);
+    templateForm.setValue("fields", [...fields]);
+  };
 
   if (user?.role !== "admin") {
     return (
@@ -374,27 +640,268 @@ export default function Settings() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { id: 1, name: "Travel Expense", fields: 12 },
-                  { id: 2, name: "Business Promotion", fields: 8 },
-                  { id: 3, name: "Conveyance Claim", fields: 9 },
-                  { id: 4, name: "Mobile Bill", fields: 7 },
-                  { id: 5, name: "Relocation Expense", fields: 10 },
-                  { id: 6, name: "Other Claims", fields: 6 },
-                ].map((template) => (
+                {mockFormTemplates.map((template) => (
                   <Card key={template.id} className="border border-neutral-200">
                     <CardHeader className="p-4 pb-2">
                       <CardTitle className="text-base">{template.name}</CardTitle>
-                      <CardDescription>{template.fields} fields configured</CardDescription>
+                      <CardDescription>{template.fields.length} fields configured</CardDescription>
                     </CardHeader>
                     <CardFooter className="p-4 pt-2 flex justify-end">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditTemplate(template.id)}
+                      >
                         <Edit className="h-4 w-4 mr-1" /> Edit Template
                       </Button>
                     </CardFooter>
                   </Card>
                 ))}
               </div>
+              
+              {/* Template Editor Dialog */}
+              <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Edit Form Template</DialogTitle>
+                    <DialogDescription>
+                      Customize the fields for this form template. Changes will be applied to all new claims.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Form {...templateForm}>
+                    <form onSubmit={templateForm.handleSubmit(handleSaveTemplate)} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={templateForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Template Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={templateForm.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-lg font-medium">Form Fields</h3>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleAddField}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Field
+                          </Button>
+                        </div>
+                        
+                        <div className="border rounded-md p-0">
+                          {templateForm.watch("fields").length === 0 ? (
+                            <div className="p-4 text-center text-neutral-500">
+                              No fields configured. Click "Add Field" to start.
+                            </div>
+                          ) : (
+                            <div className="divide-y">
+                              {templateForm.watch("fields").map((field, index) => (
+                                <div key={field.id || index} className="p-4 bg-white">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <h4 className="text-sm font-medium">Field #{index + 1}</h4>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveField(index)}
+                                    >
+                                      <MinusCircle className="h-4 w-4 text-red-500" />
+                                    </Button>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                      control={templateForm.control}
+                                      name={`fields.${index}.name`}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Field ID</FormLabel>
+                                          <FormControl>
+                                            <Input {...field} />
+                                          </FormControl>
+                                          <FormDescription>
+                                            Used in code, no spaces or special characters
+                                          </FormDescription>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={templateForm.control}
+                                      name={`fields.${index}.label`}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Display Label</FormLabel>
+                                          <FormControl>
+                                            <Input {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={templateForm.control}
+                                      name={`fields.${index}.type`}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Field Type</FormLabel>
+                                          <Select
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                          >
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue placeholder="Select field type" />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              <SelectItem value="text">Text</SelectItem>
+                                              <SelectItem value="number">Number</SelectItem>
+                                              <SelectItem value="date">Date</SelectItem>
+                                              <SelectItem value="select">Dropdown</SelectItem>
+                                              <SelectItem value="textarea">Text Area</SelectItem>
+                                              <SelectItem value="file">File Upload</SelectItem>
+                                              <SelectItem value="checkbox">Checkbox</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={templateForm.control}
+                                      name={`fields.${index}.required`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                          <FormControl>
+                                            <Switch
+                                              checked={field.value}
+                                              onCheckedChange={field.onChange}
+                                            />
+                                          </FormControl>
+                                          <div className="space-y-1 leading-none">
+                                            <FormLabel>Required Field</FormLabel>
+                                            <FormDescription>
+                                              Users must provide a value for this field
+                                            </FormDescription>
+                                          </div>
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    {field.type === "text" && (
+                                      <FormField
+                                        control={templateForm.control}
+                                        name={`fields.${index}.placeholder`}
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>Placeholder</FormLabel>
+                                            <FormControl>
+                                              <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                    )}
+                                    
+                                    {field.type === "select" && (
+                                      <div className="col-span-2">
+                                        <FormLabel className="block mb-2">Dropdown Options</FormLabel>
+                                        <div className="space-y-2">
+                                          {field.options?.map((option, optionIndex) => (
+                                            <div key={optionIndex} className="flex gap-2">
+                                              <FormField
+                                                control={templateForm.control}
+                                                name={`fields.${index}.options.${optionIndex}.value`}
+                                                render={({ field }) => (
+                                                  <FormItem className="flex-1">
+                                                    <FormControl>
+                                                      <Input placeholder="Value" {...field} />
+                                                    </FormControl>
+                                                  </FormItem>
+                                                )}
+                                              />
+                                              <FormField
+                                                control={templateForm.control}
+                                                name={`fields.${index}.options.${optionIndex}.label`}
+                                                render={({ field }) => (
+                                                  <FormItem className="flex-1">
+                                                    <FormControl>
+                                                      <Input placeholder="Label" {...field} />
+                                                    </FormControl>
+                                                  </FormItem>
+                                                )}
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <DialogFooter>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setTemplateDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={isTemplateSubmitting}>
+                          {isTemplateSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save Template
+                            </>
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
               <Button variant="outline" className="w-full">
