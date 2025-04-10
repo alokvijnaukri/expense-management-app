@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, jsonb, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User Roles
 export const UserRoles = {
@@ -69,6 +70,22 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+// User relations
+export const usersRelations = relations(users, ({ many, one }) => ({
+  claims: many(claims),
+  manager: one(users, {
+    fields: [users.managerId],
+    references: [users.id],
+  }),
+  directReports: many(users, {
+    relationName: "manager",
+  }),
+  orgHierarchy: many(organizationHierarchy),
+  approvals: many(approvals, { relationName: "approver" }),
+  nextApprovals: many(approvals, { relationName: "nextApprover" }),
+  currentApprovals: many(claims, { relationName: "currentApprover" }),
+}));
+
 // Claims Schema
 export const claims = pgTable("claims", {
   id: serial("id").primaryKey(),
@@ -100,6 +117,20 @@ export const insertClaimSchema = createInsertSchema(claims).omit({
   approvedAmount: true,
 });
 
+// Claims relations
+export const claimsRelations = relations(claims, ({ one, many }) => ({
+  user: one(users, {
+    fields: [claims.userId],
+    references: [users.id],
+  }),
+  currentApprover: one(users, {
+    fields: [claims.currentApproverId],
+    references: [users.id],
+    relationName: "currentApprover",
+  }),
+  approvals: many(approvals),
+}));
+
 // Organizational Hierarchy Schema
 export const organizationHierarchy = pgTable("organization_hierarchy", {
   id: serial("id").primaryKey(),
@@ -119,6 +150,14 @@ export const insertOrgHierarchySchema = createInsertSchema(organizationHierarchy
   updatedAt: true,
 });
 
+// Organization Hierarchy relations
+export const organizationHierarchyRelations = relations(organizationHierarchy, ({ one }) => ({
+  user: one(users, {
+    fields: [organizationHierarchy.userId],
+    references: [users.id],
+  }),
+}));
+
 // Approvals Schema
 export const approvals = pgTable("approvals", {
   id: serial("id").primaryKey(),
@@ -137,6 +176,24 @@ export const insertApprovalSchema = createInsertSchema(approvals).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// Approvals relations
+export const approvalsRelations = relations(approvals, ({ one }) => ({
+  claim: one(claims, {
+    fields: [approvals.claimId],
+    references: [claims.id],
+  }),
+  approver: one(users, {
+    fields: [approvals.approverId],
+    references: [users.id],
+    relationName: "approver",
+  }),
+  nextApprover: one(users, {
+    fields: [approvals.nextApproverId],
+    references: [users.id],
+    relationName: "nextApprover",
+  }),
+}));
 
 // Types
 export type User = typeof users.$inferSelect;

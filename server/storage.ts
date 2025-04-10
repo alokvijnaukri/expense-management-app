@@ -2,7 +2,8 @@ import {
   type User, type InsertUser, users,
   type Claim, type InsertClaim, claims,
   type Approval, type InsertApproval, approvals,
-  ClaimStatus, UserRoles, ClaimTypes, ApprovalLevels
+  ClaimStatus, UserRoles, ClaimTypes, ApprovalLevels,
+  type ClaimType, type ClaimStatusType
 } from "@shared/schema";
 
 // modify the interface with any CRUD methods
@@ -42,7 +43,7 @@ export interface IStorage {
   // Organization Hierarchy methods
   getOrgHierarchy(id: number): Promise<any>;
   createOrgHierarchy(hierarchy: any): Promise<any>;
-  getApproversByDepartment(departmentId: string, level: number): Promise<User[]>;
+  getApproversByDepartment(departmentId: string, level: ApprovalLevel): Promise<User[]>;
   getNextApprover(userId: number, departmentId: string, businessUnitId: string, amount: number): Promise<User | undefined>;
   getApprovalChain(departmentId: string, businessUnitId: string, amount: number): Promise<User[]>;
 }
@@ -306,7 +307,23 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const newUser: User = { ...user, id, createdAt: new Date() };
+    // Create a properly typed User object with all required fields
+    const newUser: User = { 
+      id,
+      username: user.username,
+      password: user.password,
+      name: user.name,
+      email: user.email,
+      department: user.department,
+      designation: user.designation,
+      branch: user.branch,
+      eCode: user.eCode,
+      band: user.band,
+      businessUnit: user.businessUnit,
+      role: user.role,
+      managerId: user.managerId ?? null,
+      createdAt: new Date()
+    };
     this.usersMap.set(id, newUser);
     return newUser;
   }
@@ -333,11 +350,17 @@ export class MemStorage implements IStorage {
     const type = claim.type as ClaimType;
     const status = claim.status as ClaimStatusType;
     
+    // Create a properly structured claim object with all required fields
     const newClaim: Claim = { 
-      ...claim, 
+      id,
+      claimId: claim.claimId,
+      userId: claim.userId,
       type,
       status,
-      id, 
+      totalAmount: claim.totalAmount,
+      details: claim.details,
+      notes: claim.notes || null,
+      currentApproverId: claim.currentApproverId || null,
       createdAt: now, 
       updatedAt: now,
       submittedAt: status === ClaimStatus.SUBMITTED ? now : null,
@@ -456,7 +479,7 @@ export class MemStorage implements IStorage {
     return newHierarchy;
   }
 
-  async getApproversByDepartment(departmentId: string, level: number): Promise<User[]> {
+  async getApproversByDepartment(departmentId: string, level: ApprovalLevel): Promise<User[]> {
     // Find users who can approve for this department at this level
     const departmentApprovers = Array.from(this.usersMap.values()).filter(user => {
       // Check if the user is in the same department and has appropriate role
@@ -485,7 +508,7 @@ export class MemStorage implements IStorage {
     }
     
     // If no direct manager found, find an approver based on amount threshold and department
-    let level = ApprovalLevels.MANAGER;
+    let level: ApprovalLevel = ApprovalLevels.MANAGER;
     
     // Determine approval level based on amount
     if (amount > 50000) {
