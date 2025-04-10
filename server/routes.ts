@@ -378,10 +378,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     if (claimId) {
-      const approvals = await storage.getApprovalsByClaimId(claimId);
-      return res.status(200).json(approvals);
+      const approvals = await storage.getApprovalsByClaimId(parseInt(claimId as string));
+      
+      // Enhance approvals with approver details
+      const enhancedApprovals = await Promise.all(
+        approvals.map(async (approval) => {
+          const approver = await storage.getUser(approval.approverId);
+          
+          return {
+            ...approval,
+            approverName: approver ? approver.name : "Unknown",
+            approverTitle: approver ? approver.designation : "Approver",
+            approverDepartment: approver ? approver.department : "",
+          };
+        })
+      );
+      
+      return res.status(200).json(enhancedApprovals);
     } else if (approverId) {
-      const approvals = await storage.getApprovalsByApproverId(approverId);
+      const approvals = await storage.getApprovalsByApproverId(parseInt(approverId as string));
       return res.status(200).json(approvals);
     }
   });
