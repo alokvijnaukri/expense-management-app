@@ -75,7 +75,9 @@ export default function AuthPage() {
   };
 
   // Redirect if already logged in
+  console.log("Auth page - Current user:", user);
   if (user) {
+    console.log("Redirecting to home page");
     return <Redirect to="/" />;
   }
 
