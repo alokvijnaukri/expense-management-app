@@ -30,7 +30,7 @@ const ClaimStatus = {
 
 // Config - tweak these to adjust the distribution of claims
 const TOTAL_CLAIMS = 100;
-const USERS = [4, 5]; // Regular employees
+const USERS = [4]; // Regular employee (only using ID 4 as it exists)
 const APPROVERS = [3, 2, 1]; // Manager, Finance, Admin
 
 // Helper function to get a random item from an array
