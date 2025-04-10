@@ -23,24 +23,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import ClaimDetailsModal from "@/components/claims/ClaimDetailsModal";
 
 export default function RejectedClaims() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id, ClaimStatus.REJECTED],
+    queryKey: ["/api/claims", user?.id, "rejected"],
     queryFn: async () => {
-      const res = await fetch(`/api/claims?userId=${user?.id}&status=${ClaimStatus.REJECTED}`);
+      const res = await fetch(`/api/claims?userId=${user?.id}&status=rejected`);
       if (!res.ok) throw new Error("Failed to fetch rejected claims");
-      return res.json();
+      const data = await res.json();
+      console.log("Rejected claims response:", data);
+      return data;
     },
     enabled: !!user?.id,
   });
 
   const handleViewClick = (claim: any) => {
+    setSelectedClaim(claim);
+    setIsModalOpen(true);
     toast({
       title: "View Claim",
       description: `Viewing claim ${claim.claimId}`,
@@ -180,6 +187,15 @@ export default function RejectedClaims() {
             Create New Claim
           </Button>
         </div>
+      )}
+
+      {/* Claim Details Modal */}
+      {selectedClaim && (
+        <ClaimDetailsModal
+          claim={selectedClaim}
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+        />
       )}
     </div>
   );
