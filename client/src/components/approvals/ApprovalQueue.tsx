@@ -59,14 +59,40 @@ export default function ApprovalQueue() {
     refetchOnWindowFocus: true,
   });
   
-  // Get approval history - claims that have been approved or rejected
+  // Get approval history - approvals that have been processed by this approver
   const { data: approvalHistory = [], isLoading: isLoadingHistory } = useQuery({
     queryKey: ["/api/approvals/history", user?.id],
     queryFn: async () => {
-      // Using the regular claims endpoint but filtering for approved/rejected items
-      const res = await fetch(`/api/claims?status=approved,rejected&approverId=${user?.id}`);
+      // Using our new approvals endpoint to get approvals by approver ID
+      const res = await fetch(`/api/approvals?approverId=${user?.id}`);
       if (!res.ok) throw new Error("Failed to fetch approval history");
-      return res.json();
+      
+      // Get the approvals
+      const approvals = await res.json();
+      
+      // If no approvals, return empty array
+      if (!approvals || approvals.length === 0) return [];
+      
+      // Get the related claims for each approval
+      const claimPromises = approvals.map(async (approval: any) => {
+        const claimRes = await fetch(`/api/claims/${approval.claimId}`);
+        if (!claimRes.ok) return null;
+        const claim = await claimRes.json();
+        // Enhance the claim with approval data
+        return { 
+          ...claim, 
+          approvalStatus: approval.status,
+          approvalLevel: approval.approvalLevel,
+          approvalNotes: approval.notes,
+          approvalDate: approval.updatedAt
+        };
+      });
+      
+      // Wait for all claim promises to resolve
+      const claims = await Promise.all(claimPromises);
+      
+      // Filter out any null claims (failed requests)
+      return claims.filter(claim => claim !== null);
     },
     enabled: !!user?.id,
   });
@@ -381,10 +407,19 @@ export default function ApprovalQueue() {
                         <span className="text-sm">{formatDate(claim.createdAt)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-neutral-500">Decision:</span>
-                        <span className="text-sm">{formatDate(claim.updatedAt)}</span>
+                        <span className="text-sm text-neutral-500">Your Decision:</span>
+                        <span className="text-sm font-medium">{claim.approvalStatus === "approved" ? "Approved" : "Rejected"}</span>
                       </div>
-                      {claim.notes && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-neutral-500">Decision Date:</span>
+                        <span className="text-sm">{formatDate(claim.approvalDate || claim.updatedAt)}</span>
+                      </div>
+                      {claim.approvalNotes && (
+                        <div className="text-sm text-neutral-600 line-clamp-2">
+                          <span className="font-medium">Your Notes:</span> {claim.approvalNotes}
+                        </div>
+                      )}
+                      {claim.notes && !claim.approvalNotes && (
                         <div className="text-sm text-neutral-600 line-clamp-2">
                           <span className="font-medium">Notes:</span> {claim.notes}
                         </div>

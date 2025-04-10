@@ -371,13 +371,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Approvals routes
   app.get("/api/approvals", async (req: Request, res: Response) => {
     const claimId = req.query.claimId ? parseInt(req.query.claimId as string) : undefined;
+    const approverId = req.query.approverId ? parseInt(req.query.approverId as string) : undefined;
     
-    if (!claimId) {
-      return res.status(400).json({ message: "Claim ID is required" });
+    if (!claimId && !approverId) {
+      return res.status(400).json({ message: "Either claim ID or approver ID is required" });
     }
     
-    const approvals = await storage.getApprovalsByClaimId(claimId);
-    return res.status(200).json(approvals);
+    if (claimId) {
+      const approvals = await storage.getApprovalsByClaimId(claimId);
+      return res.status(200).json(approvals);
+    } else if (approverId) {
+      const approvals = await storage.getApprovalsByApproverId(approverId);
+      return res.status(200).json(approvals);
+    }
   });
 
   app.post("/api/approvals", async (req: Request, res: Response) => {
@@ -421,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (req.body.status === "rejected") {
             await storage.updateClaim(claim.id, { 
               status: ClaimStatus.REJECTED,
-              notes: req.body.notes || claim.notes,
+              notes: `${req.body.notes || claim.notes || ''}\nRejected by approver ID ${approval.approverId}.`,
               currentApproverId: null  // Clear the current approver
             });
           } 
@@ -430,7 +436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Update claim with the next approver
             await storage.updateClaim(claim.id, { 
               currentApproverId: approval.nextApproverId,
-              notes: `${req.body.notes || claim.notes || ''}\nApproved by ${req.user?.name || 'previous approver'}.`
+              notes: `${req.body.notes || claim.notes || ''}\nApproved by approver ID ${approval.approverId}. Moving to next approver.`
             });
             
             // Get the user who is submitting the claim
@@ -456,7 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           else if (req.body.status === "approved" && !approval.nextApproverId) {
             await storage.updateClaim(claim.id, { 
               status: ClaimStatus.APPROVED,
-              notes: `${req.body.notes || claim.notes || ''}\nFully approved.`,
+              notes: `${req.body.notes || claim.notes || ''}\nFully approved by approver ID ${approval.approverId}.`,
               currentApproverId: null  // Clear the current approver
             });
           }
