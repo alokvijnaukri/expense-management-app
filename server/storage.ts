@@ -418,7 +418,7 @@ export class MemStorage implements IStorage {
 
   async getClaimsForApproval(approverId: number): Promise<Claim[]> {
     return Array.from(this.claimsMap.values()).filter(
-      (claim) => claim.currentApproverId === approverId && claim.status === ClaimStatus.SUBMITTED
+      (claim) => claim.currentApproverId === approverId && claim.status === ClaimStatus.PENDING
     );
   }
 
@@ -906,7 +906,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(claims.currentApproverId, approverId),
-          eq(claims.status, ClaimStatus.SUBMITTED)
+          eq(claims.status, ClaimStatus.PENDING)
         )
       );
   }

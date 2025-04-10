@@ -27,6 +27,7 @@ export type ApprovalLevel = (typeof ApprovalLevels)[keyof typeof ApprovalLevels]
 export const ClaimStatus = {
   DRAFT: "draft",
   SUBMITTED: "submitted",
+  PENDING: "pending",
   APPROVED: "approved",
   REJECTED: "rejected",
   PROCESSING: "processing",
