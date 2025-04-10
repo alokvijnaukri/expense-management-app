@@ -44,11 +44,28 @@ export default function ApprovalQueue() {
     return type !== undefined ? getClaimTypeName(type) : '-';
   };
 
-  const { data: claimsForApproval = [], isLoading: isLoadingApprovals } = useQuery({
+  // Get pending claims for approval
+  const { data: claimsForApproval = [], isLoading: isLoadingApprovals, refetch } = useQuery({
     queryKey: ["/api/claims/approval", user?.id],
     queryFn: async () => {
       const res = await fetch(`/api/claims/approval?approverId=${user?.id}`);
       if (!res.ok) throw new Error("Failed to fetch claims for approval");
+      return res.json();
+    },
+    enabled: !!user?.id,
+    // Refetch data every 5 seconds and whenever the component mounts/window focuses
+    refetchInterval: 5000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
+  
+  // Get approval history - claims that have been approved or rejected
+  const { data: approvalHistory = [], isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["/api/approvals/history", user?.id],
+    queryFn: async () => {
+      // Using the regular claims endpoint but filtering for approved/rejected items
+      const res = await fetch(`/api/claims?status=approved,rejected&approverId=${user?.id}`);
+      if (!res.ok) throw new Error("Failed to fetch approval history");
       return res.json();
     },
     enabled: !!user?.id,
@@ -336,9 +353,57 @@ export default function ApprovalQueue() {
         </TabsContent>
         
         <TabsContent value="history">
-          <div className="text-center py-8">
-            <p className="text-neutral-500">Approval history will be shown here</p>
-          </div>
+          {isLoadingHistory ? (
+            <div className="text-center py-8">
+              <p className="text-neutral-500">Loading approval history...</p>
+            </div>
+          ) : approvalHistory && approvalHistory.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {approvalHistory.map((claim: any) => (
+                <Card key={claim.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-base">{claim.claimId}</CardTitle>
+                        <CardDescription>{getClaimTypeName(claim.type)}</CardDescription>
+                      </div>
+                      <StatusBadge status={claim.status} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-neutral-500">Amount:</span>
+                        <span className="text-sm font-medium">{safeFormatCurrency(claim.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-neutral-500">Submitted:</span>
+                        <span className="text-sm">{formatDate(claim.createdAt)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-neutral-500">Decision:</span>
+                        <span className="text-sm">{formatDate(claim.updatedAt)}</span>
+                      </div>
+                      {claim.notes && (
+                        <div className="text-sm text-neutral-600 line-clamp-2">
+                          <span className="font-medium">Notes:</span> {claim.notes}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between pt-2">
+                    <Button variant="outline" size="sm" onClick={() => handleViewClaim(claim)}>
+                      <Eye className="h-4 w-4 mr-1" /> View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-neutral-500">No approval history found</p>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
