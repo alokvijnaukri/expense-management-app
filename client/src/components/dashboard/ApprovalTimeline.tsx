@@ -1,10 +1,10 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { formatDate, getClaimTypeIcon, getClaimTypeName } from "@/lib/utils";
 
 export default function ApprovalTimeline() {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const { data: claims, isLoading } = useQuery({
     queryKey: ["/api/claims", user?.id],
