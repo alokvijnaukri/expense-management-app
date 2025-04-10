@@ -72,8 +72,10 @@ export default function AuthPage() {
     loginMutation.mutate(data, {
       onSuccess: () => {
         console.log("Login mutation success, navigating to home");
-        // Force navigation to home page
-        navigate("/", { replace: true });
+        // Force navigation to home page after a small delay to allow for query invalidation
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 100);
       }
     });
   };
