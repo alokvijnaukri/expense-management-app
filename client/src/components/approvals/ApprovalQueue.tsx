@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency, formatDate, getClaimTypeName } from "@/lib/utils";
@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, ThumbsUp, ThumbsDown, User, FileText, Calendar, DollarSign } from "lucide-react";
 
 export default function ApprovalQueue() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
