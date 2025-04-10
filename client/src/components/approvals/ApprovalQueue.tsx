@@ -139,12 +139,22 @@ export default function ApprovalQueue() {
       // Clear the selected claim immediately to update UI
       setSelectedClaim(null);
       
-      // Invalidate all queries to ensure complete refresh
-      queryClient.invalidateQueries();
+      // Invalidate specific queries to ensure complete refresh
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/claims/approval"] 
+      });
       
-      // Force refetch of specific approval queue data
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/approvals/history"] 
+      });
+      
+      // Force refetch of specific queue and history data
       queryClient.refetchQueries({ 
         queryKey: ["/api/claims/approval", user?.id] 
+      });
+      
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/approvals/history", user?.id] 
       });
 
       // Close modal
@@ -191,12 +201,22 @@ export default function ApprovalQueue() {
       // Clear the selected claim immediately to update UI
       setSelectedClaim(null);
       
-      // Invalidate all queries to ensure complete refresh
-      queryClient.invalidateQueries();
+      // Invalidate specific queries to ensure complete refresh
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/claims/approval"] 
+      });
       
-      // Force refetch of specific approval queue data
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/approvals/history"] 
+      });
+      
+      // Force refetch of specific queue and history data
       queryClient.refetchQueries({ 
         queryKey: ["/api/claims/approval", user?.id] 
+      });
+      
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/approvals/history", user?.id] 
       });
 
       // Close modal
@@ -408,8 +428,22 @@ export default function ApprovalQueue() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-neutral-500">Your Decision:</span>
-                        <span className="text-sm font-medium">{claim.approvalStatus === "approved" ? "Approved" : "Rejected"}</span>
+                        <span className={`text-sm font-medium ${claim.approvalStatus === "approved" ? "text-green-600" : "text-red-600"}`}>
+                          {claim.approvalStatus === "approved" ? "Approved" : "Rejected"}
+                        </span>
                       </div>
+                      {claim.approvalLevel && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-neutral-500">Approval Level:</span>
+                          <span className="text-sm">
+                            {claim.approvalLevel === 1 ? "Manager" : 
+                             claim.approvalLevel === 2 ? "Finance" :
+                             claim.approvalLevel === 3 ? "Director" :
+                             claim.approvalLevel === 4 ? "Executive" : 
+                             `Level ${claim.approvalLevel}`}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-sm text-neutral-500">Decision Date:</span>
                         <span className="text-sm">{formatDate(claim.approvalDate || claim.updatedAt)}</span>
