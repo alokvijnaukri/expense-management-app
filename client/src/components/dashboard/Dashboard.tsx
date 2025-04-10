@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { PlusIcon, CoinsIcon, ClockIcon, CheckIcon, XIcon } from "lucide-react";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ClaimStatus } from "@shared/schema";
 
 export default function Dashboard() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
 

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate, getClaimTypeIcon } from "@/lib/utils";
 import { Eye, Edit, CopyIcon } from "lucide-react";
 import {
@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import ClaimDetailsModal from "@/components/claims/ClaimDetailsModal";
 
 export default function RecentClaims() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("30");

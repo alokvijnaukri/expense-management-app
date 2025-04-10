@@ -10,11 +10,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { getClaimTypeName } from "@/lib/utils";
 
 export default function ExpenseBreakdown() {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const { data: claims, isLoading } = useQuery({
     queryKey: ["/api/claims", user?.id],
