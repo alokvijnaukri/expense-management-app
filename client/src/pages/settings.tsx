@@ -233,12 +233,12 @@ export default function Settings() {
             { value: "dec", label: "December" }
           ]
         },
-        { id: "2", name: "mobileNumber", label: "Mobile Number", type: "text", required: true },
-        { id: "3", name: "billDate", label: "Bill Date", type: "date", required: true },
-        { id: "4", name: "billAmount", label: "Bill Amount", type: "number", required: true },
-        { id: "5", name: "claimAmount", label: "Claim Amount", type: "number", required: true },
-        { id: "6", name: "billAttached", label: "Bill Attached", type: "checkbox", required: true },
-        { id: "7", name: "remarks", label: "Remarks", type: "textarea", required: false }
+        { id: "2", name: "mobileNumber", label: "Mobile Number", type: FieldType.TEXT, required: true },
+        { id: "3", name: "billDate", label: "Bill Date", type: FieldType.DATE, required: true },
+        { id: "4", name: "billAmount", label: "Bill Amount", type: FieldType.NUMBER, required: true },
+        { id: "5", name: "claimAmount", label: "Claim Amount", type: FieldType.NUMBER, required: true },
+        { id: "6", name: "billAttached", label: "Bill Attached", type: FieldType.CHECKBOX, required: true },
+        { id: "7", name: "remarks", label: "Remarks", type: FieldType.TEXTAREA, required: false }
       ]
     },
     { 
@@ -246,21 +246,21 @@ export default function Settings() {
       name: "Relocation Expense", 
       description: "Form for relocation expense claims",
       fields: [
-        { id: "1", name: "relocationType", label: "Relocation Type", type: "select", required: true,
+        { id: "1", name: "relocationType", label: "Relocation Type", type: FieldType.SELECT, required: true,
           options: [
             { value: "domestic", label: "Domestic" },
             { value: "international", label: "International" }
           ]
         },
-        { id: "2", name: "fromLocation", label: "From Location", type: "text", required: true },
-        { id: "3", name: "toLocation", label: "To Location", type: "text", required: true },
-        { id: "4", name: "relocateDate", label: "Relocation Date", type: "date", required: true },
-        { id: "5", name: "travelExpense", label: "Travel Expense", type: "number", required: true },
-        { id: "6", name: "packingExpense", label: "Packing & Moving Expense", type: "number", required: true },
-        { id: "7", name: "temporaryStay", label: "Temporary Stay Expense", type: "number", required: false },
-        { id: "8", name: "otherExpense", label: "Other Expenses", type: "number", required: false },
-        { id: "9", name: "totalAmount", label: "Total Amount", type: "number", required: true },
-        { id: "10", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true }
+        { id: "2", name: "fromLocation", label: "From Location", type: FieldType.TEXT, required: true },
+        { id: "3", name: "toLocation", label: "To Location", type: FieldType.TEXT, required: true },
+        { id: "4", name: "relocateDate", label: "Relocation Date", type: FieldType.DATE, required: true },
+        { id: "5", name: "travelExpense", label: "Travel Expense", type: FieldType.NUMBER, required: true },
+        { id: "6", name: "packingExpense", label: "Packing & Moving Expense", type: FieldType.NUMBER, required: true },
+        { id: "7", name: "temporaryStay", label: "Temporary Stay Expense", type: FieldType.NUMBER, required: false },
+        { id: "8", name: "otherExpense", label: "Other Expenses", type: FieldType.NUMBER, required: false },
+        { id: "9", name: "totalAmount", label: "Total Amount", type: FieldType.NUMBER, required: true },
+        { id: "10", name: "receiptsAttached", label: "Receipts Attached", type: FieldType.CHECKBOX, required: true }
       ]
     },
     { 
@@ -268,12 +268,12 @@ export default function Settings() {
       name: "Other Claims", 
       description: "Form for miscellaneous expense claims",
       fields: [
-        { id: "1", name: "expenseDate", label: "Expense Date", type: "date", required: true },
-        { id: "2", name: "expenseType", label: "Expense Type", type: "text", required: true },
-        { id: "3", name: "vendor", label: "Vendor/Payee", type: "text", required: true },
-        { id: "4", name: "purpose", label: "Purpose", type: "textarea", required: true },
-        { id: "5", name: "amount", label: "Amount", type: "number", required: true },
-        { id: "6", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true }
+        { id: "1", name: "expenseDate", label: "Expense Date", type: FieldType.DATE, required: true },
+        { id: "2", name: "expenseType", label: "Expense Type", type: FieldType.TEXT, required: true },
+        { id: "3", name: "vendor", label: "Vendor/Payee", type: FieldType.TEXT, required: true },
+        { id: "4", name: "purpose", label: "Purpose", type: FieldType.TEXTAREA, required: true },
+        { id: "5", name: "amount", label: "Amount", type: FieldType.NUMBER, required: true },
+        { id: "6", name: "receiptsAttached", label: "Receipts Attached", type: FieldType.CHECKBOX, required: true }
       ]
     }
   ];
