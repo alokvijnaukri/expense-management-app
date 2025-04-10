@@ -65,16 +65,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Claims routes
   app.get("/api/claims", async (req: Request, res: Response) => {
     const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-    const status = req.query.status as string | undefined;
+    const approverId = req.query.approverId ? parseInt(req.query.approverId as string) : undefined;
+    let status = req.query.status as string | undefined;
 
     let claims = [];
     
-    if (userId && status) {
+    // Handle multiple statuses (comma-separated)
+    if (status && status.includes(',')) {
+      const statuses = status.split(',');
+      let claimsList: any[] = [];
+      
+      for (const s of statuses) {
+        const statusClaims = userId 
+          ? await storage.getClaimsByUserIdAndStatus(userId, s.trim())
+          : await storage.getClaimsByStatus(s.trim());
+        claimsList = [...claimsList, ...statusClaims];
+      }
+      
+      claims = claimsList;
+    } else if (userId && status) {
       claims = await storage.getClaimsByUserIdAndStatus(userId, status);
     } else if (userId) {
       claims = await storage.getClaimsByUserId(userId);
     } else if (status) {
       claims = await storage.getClaimsByStatus(status);
+    } else if (approverId) {
+      // Get all claims associated with this approver (approved or rejected)
+      const allClaims = await storage.getAllClaims();
+      // Filter to only include claims that were approved or rejected by this approver
+      claims = allClaims.filter(claim => 
+        (claim.status === ClaimStatus.APPROVED || claim.status === ClaimStatus.REJECTED) && 
+        claim.currentApproverId === null && // Current approver is cleared after approval/rejection
+        claim.notes?.includes(`by approver ID ${approverId}`) // Add this metadata in update
+      );
     } else {
       claims = await storage.getAllClaims();
     }

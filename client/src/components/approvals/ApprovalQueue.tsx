@@ -101,7 +101,7 @@ export default function ApprovalQueue() {
       await apiRequest("PATCH", `/api/claims/${selectedClaim.id}`, {
         status: "approved",
         approvedAmount: selectedClaim.totalAmount,
-        notes: notes || "Approved"
+        notes: `${notes || "Approved"} by approver ID ${user?.id}`
       });
 
       // Show success message
@@ -150,10 +150,10 @@ export default function ApprovalQueue() {
     try {
       setIsProcessing(true);
 
-      // Update claim status
+      // Update claim status with approver ID in notes
       await apiRequest("PATCH", `/api/claims/${selectedClaim.id}`, {
         status: "rejected",
-        notes: notes
+        notes: `${notes} (Rejected by approver ID ${user?.id})`
       });
 
       // Show success message
