@@ -20,8 +20,10 @@ import {
   ChevronDownIcon,
   MenuIcon,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { UserRoles } from "@shared/schema";
+import { useLocation } from "wouter";
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -30,9 +32,18 @@ interface HeaderProps {
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
 
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+  
+  const goToProfile = () => {
+    setLocation("/profile");
+  };
+  
+  const goToSettings = () => {
+    setLocation("/settings");
   };
 
   return (
@@ -67,11 +78,14 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <ChevronDownIcon className="h-4 w-4 ml-1" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={goToProfile}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={goToSettings}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} disabled={logoutMutation.isPending}>
                 {logoutMutation.isPending ? (

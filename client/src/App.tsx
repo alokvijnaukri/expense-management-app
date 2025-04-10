@@ -9,6 +9,7 @@ import RejectedClaims from "@/pages/rejected-claims";
 import ApprovalQueue from "@/pages/approval-queue";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import Profile from "@/pages/profile";
 import AuthPage from "@/pages/auth-page";
 import { AuthProvider } from "./hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -56,6 +57,7 @@ function RoutesWithAuth() {
       <ProtectedRoute path="/pending-claims" component={PendingClaims} />
       <ProtectedRoute path="/approved-claims" component={ApprovedClaims} />
       <ProtectedRoute path="/rejected-claims" component={RejectedClaims} />
+      <ProtectedRoute path="/profile" component={Profile} />
       
       {/* Role-restricted routes */}
       {isManager && <ProtectedRoute path="/approval-queue" component={ApprovalQueue} />}
@@ -81,6 +83,7 @@ function Routes() {
       <ProtectedRoute path="/pending-claims" component={PendingClaims} />
       <ProtectedRoute path="/approved-claims" component={ApprovedClaims} />
       <ProtectedRoute path="/rejected-claims" component={RejectedClaims} />
+      <ProtectedRoute path="/profile" component={Profile} />
       <ProtectedRoute path="/approval-queue" component={ApprovalQueue} />
       <ProtectedRoute path="/reports" component={Reports} />
       <ProtectedRoute path="/settings" component={Settings} />
