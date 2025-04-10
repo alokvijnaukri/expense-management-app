@@ -55,10 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      const userData = await res.json();
+      console.log("Login API response:", userData);
+      return userData;
     },
     onSuccess: (data: User) => {
       console.log("Login successful, setting user data:", data);
+      // Invalidate the query cache to force a refetch
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      // Also set the data directly
       queryClient.setQueryData(["/api/user"], data);
       toast({
         title: "Login successful",

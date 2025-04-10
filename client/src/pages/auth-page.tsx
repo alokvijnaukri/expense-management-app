@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,8 +66,16 @@ export default function AuthPage() {
     },
   });
 
+  const [_, navigate] = useLocation();
+
   const onLoginSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data);
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        console.log("Login mutation success, navigating to home");
+        // Force navigation to home page
+        navigate("/", { replace: true });
+      }
+    });
   };
 
   const onRegisterSubmit = (data: RegisterFormData) => {
@@ -76,9 +84,21 @@ export default function AuthPage() {
 
   // Redirect if already logged in
   console.log("Auth page - Current user:", user);
-  if (user) {
-    console.log("Redirecting to home page");
+  console.log("Auth page - isLoading:", isLoading);
+  
+  // Only redirect once we're sure we're authenticated
+  if (user && !isLoading) {
+    console.log("Auth page - Redirecting to home");
     return <Redirect to="/" />;
+  }
+  
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
