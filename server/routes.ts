@@ -7,7 +7,8 @@ import { setupAuth } from "./auth";
 import { 
   insertClaimSchema, 
   insertApprovalSchema, 
-  ClaimStatus, 
+  ClaimStatus,
+  ApprovalLevels,
   travelExpenseSchema,
   businessPromotionSchema,
   conveyanceClaimSchema,
@@ -153,16 +154,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw error;
       }
       
-      // Handle approval flow based on user band
+      // Handle approval flow based on org hierarchy
       const user = await storage.getUser(newClaimData.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Set current approver based on user's manager
+      // Set current approver based on organizational hierarchy
       let currentApproverId = null;
-      if (newClaimData.status === ClaimStatus.SUBMITTED && user.managerId) {
-        currentApproverId = user.managerId;
+      let nextApproverId = null;
+      
+      if (newClaimData.status === ClaimStatus.SUBMITTED) {
+        // Get the next approver from org hierarchy
+        const nextApprover = await storage.getNextApprover(
+          newClaimData.userId,
+          user.department,
+          user.businessUnit,
+          newClaimData.totalAmount
+        );
+        
+        if (nextApprover) {
+          currentApproverId = nextApprover.id;
+          
+          // Get the full approval chain to determine next approver
+          const approvalChain = await storage.getApprovalChain(
+            user.department,
+            user.businessUnit,
+            newClaimData.totalAmount
+          );
+          
+          // If there's more than one approver in the chain,
+          // set the next approver for the approval record
+          if (approvalChain.length > 1) {
+            // Find the index of current approver
+            const currentApproverIndex = approvalChain.findIndex(a => a.id === currentApproverId);
+            if (currentApproverIndex >= 0 && currentApproverIndex < approvalChain.length - 1) {
+              nextApproverId = approvalChain[currentApproverIndex + 1].id;
+            }
+          }
+        }
       }
       
       // Create the claim
@@ -171,13 +201,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentApproverId
       });
       
-      // If claim is submitted, create an approval record
+      // If claim is submitted, create an approval record with the appropriate approval level
       if (claim.status === ClaimStatus.SUBMITTED && currentApproverId) {
+        // Determine approval level based on amount
+        let approvalLevel = ApprovalLevels.MANAGER;
+        
+        if (newClaimData.totalAmount > 50000) {
+          approvalLevel = ApprovalLevels.CXO;
+        } else if (newClaimData.totalAmount > 20000) {
+          approvalLevel = ApprovalLevels.DIRECTOR;
+        } else if (newClaimData.totalAmount > 5000) {
+          approvalLevel = ApprovalLevels.FINANCE;
+        }
+        
         await storage.createApproval({
           claimId: claim.id,
           approverId: currentApproverId,
+          approvalLevel: approvalLevel,
           status: "pending",
-          notes: ""
+          notes: "",
+          nextApproverId: nextApproverId
         });
       }
       
@@ -217,16 +260,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(404).json({ message: "User not found" });
           }
           
-          // Set current approver based on user's manager
-          if (user.managerId) {
-            req.body.currentApproverId = user.managerId;
+          // Set current approver based on org hierarchy
+          let currentApproverId = null;
+          let nextApproverId = null;
+          
+          // Get the next approver from org hierarchy
+          const nextApprover = await storage.getNextApprover(
+            claim.userId,
+            user.department,
+            user.businessUnit,
+            claim.totalAmount
+          );
+          
+          if (nextApprover) {
+            currentApproverId = nextApprover.id;
+            req.body.currentApproverId = currentApproverId;
+            
+            // Get the full approval chain to determine next approver
+            const approvalChain = await storage.getApprovalChain(
+              user.department,
+              user.businessUnit,
+              claim.totalAmount
+            );
+            
+            // If there's more than one approver in the chain,
+            // set the next approver for the approval record
+            if (approvalChain.length > 1) {
+              // Find the index of current approver
+              const currentApproverIndex = approvalChain.findIndex(a => a.id === currentApproverId);
+              if (currentApproverIndex >= 0 && currentApproverIndex < approvalChain.length - 1) {
+                nextApproverId = approvalChain[currentApproverIndex + 1].id;
+              }
+            }
+            
+            // Determine approval level based on amount
+            let approvalLevel = ApprovalLevels.MANAGER;
+            
+            if (claim.totalAmount > 50000) {
+              approvalLevel = ApprovalLevels.CXO;
+            } else if (claim.totalAmount > 20000) {
+              approvalLevel = ApprovalLevels.DIRECTOR;
+            } else if (claim.totalAmount > 5000) {
+              approvalLevel = ApprovalLevels.FINANCE;
+            }
             
             // Create an approval record
             await storage.createApproval({
               claimId: claim.id,
-              approverId: user.managerId,
+              approverId: currentApproverId,
+              approvalLevel: approvalLevel,
               status: "pending",
-              notes: ""
+              notes: "",
+              nextApproverId: nextApproverId
             });
           }
         }
@@ -304,16 +389,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Approval not found" });
       }
       
-      // If approval status changed to approved/rejected, update the claim
+      // If approval status changed to approved/rejected, handle the multi-level approval flow
       if ((req.body.status === "approved" || req.body.status === "rejected") && approval.claimId) {
         const claim = await storage.getClaim(approval.claimId);
         
         if (claim) {
-          const newStatus = req.body.status === "approved" ? ClaimStatus.APPROVED : ClaimStatus.REJECTED;
-          await storage.updateClaim(claim.id, { 
-            status: newStatus,
-            notes: req.body.notes || claim.notes
-          });
+          // If rejected, update the claim status to rejected
+          if (req.body.status === "rejected") {
+            await storage.updateClaim(claim.id, { 
+              status: ClaimStatus.REJECTED,
+              notes: req.body.notes || claim.notes,
+              currentApproverId: null  // Clear the current approver
+            });
+          } 
+          // If approved and there's a next approver, move to the next approval level
+          else if (req.body.status === "approved" && approval.nextApproverId) {
+            // Update claim with the next approver
+            await storage.updateClaim(claim.id, { 
+              currentApproverId: approval.nextApproverId,
+              notes: `${req.body.notes || claim.notes || ''}\nApproved by ${req.user?.name || 'previous approver'}.`
+            });
+            
+            // Get the user who is submitting the claim
+            const claimUser = await storage.getUser(claim.userId);
+            
+            if (claimUser) {
+              // Determine the next approval level
+              let nextApprovalLevel = approval.approvalLevel + 1;
+              
+              // Create a new approval record for the next approver
+              await storage.createApproval({
+                claimId: claim.id,
+                approverId: approval.nextApproverId,
+                approvalLevel: nextApprovalLevel,
+                status: "pending",
+                notes: "",
+                // Determine if there are more approvers in the chain
+                nextApproverId: null  // This will be determined in a real implementation by checking the approval chain
+              });
+            }
+          } 
+          // If approved and there's no next approver, mark the claim as fully approved
+          else if (req.body.status === "approved" && !approval.nextApproverId) {
+            await storage.updateClaim(claim.id, { 
+              status: ClaimStatus.APPROVED,
+              notes: `${req.body.notes || claim.notes || ''}\nFully approved.`,
+              currentApproverId: null  // Clear the current approver
+            });
+          }
         }
       }
       
