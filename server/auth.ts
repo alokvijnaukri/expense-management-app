@@ -22,6 +22,12 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
+  // Check if stored password contains a salt
+  if (!stored || !stored.includes(".")) {
+    // For demo accounts with plain text passwords
+    return supplied === stored;
+  }
+  
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -114,6 +120,9 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
-    res.json(req.user);
+    
+    // Remove sensitive data like password
+    const { password, ...userWithoutPassword } = req.user as Express.User;
+    res.json(userWithoutPassword);
   });
 }
