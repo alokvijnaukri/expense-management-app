@@ -329,15 +329,22 @@ export class MemStorage implements IStorage {
   async createClaim(claim: InsertClaim): Promise<Claim> {
     const id = this.claimIdCounter++;
     const now = new Date();
+    // Ensure we have the correct type for ClaimType and ClaimStatusType
+    const type = claim.type as ClaimType;
+    const status = claim.status as ClaimStatusType;
+    
     const newClaim: Claim = { 
       ...claim, 
+      type,
+      status,
       id, 
       createdAt: now, 
       updatedAt: now,
-      submittedAt: claim.status === ClaimStatus.SUBMITTED ? now : null,
+      submittedAt: status === ClaimStatus.SUBMITTED ? now : null,
       approvedAt: null,
       rejectedAt: null,
-      paidAt: null
+      paidAt: null,
+      approvedAmount: (claim as any).approvedAmount !== undefined ? (claim as any).approvedAmount : null
     };
     this.claimsMap.set(id, newClaim);
     return newClaim;
@@ -393,8 +400,16 @@ export class MemStorage implements IStorage {
   async createApproval(approval: InsertApproval): Promise<Approval> {
     const id = this.approvalIdCounter++;
     const now = new Date();
+    // Ensure status is a valid approval status type
+    const status = approval.status as "pending" | "approved" | "rejected";
+    
     const newApproval: Approval = { 
-      ...approval, 
+      claimId: approval.claimId, 
+      approverId: approval.approverId,
+      approvalLevel: approval.approvalLevel,
+      status,
+      notes: approval.notes || null,
+      nextApproverId: approval.nextApproverId || null,
       id, 
       createdAt: now, 
       updatedAt: now
