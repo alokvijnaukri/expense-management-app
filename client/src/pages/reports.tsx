@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, getClaimTypeName } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -36,7 +36,7 @@ import { ClaimTypes } from "@shared/schema";
 const COLORS = ["#1A73E8", "#34A853", "#EA4335", "#FBBC04", "#5F6368", "#3C4043"];
 
 export default function Reports() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [timePeriod, setTimePeriod] = useState("month");
   const [reportType, setReportType] = useState("expense");
 

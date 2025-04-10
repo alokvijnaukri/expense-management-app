@@ -55,7 +55,7 @@ const generalSettingsSchema = z.object({
 });
 
 export default function Settings() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 

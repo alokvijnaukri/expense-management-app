@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ClaimStatus } from "@shared/schema";
 import { formatCurrency, formatDate, getClaimTypeName, getClaimTypeIcon } from "@/lib/utils";
@@ -25,7 +25,7 @@ import {
 import { useLocation } from "wouter";
 
 export default function ApprovedClaims() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
