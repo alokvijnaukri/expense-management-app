@@ -2,17 +2,19 @@ import {
   type User, type InsertUser, users,
   type Claim, type InsertClaim, claims,
   type Approval, type InsertApproval, approvals,
+  organizationHierarchy,
   ClaimStatus, UserRoles, ClaimTypes, ApprovalLevels,
-  type ClaimType, type ClaimStatusType
+  type ClaimType, type ClaimStatusType, type ApprovalLevel
 } from "@shared/schema";
-
-// modify the interface with any CRUD methods
-// you might need
 
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // Session store
@@ -573,4 +575,209 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  public sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  // Claim methods
+  async getClaim(id: number): Promise<Claim | undefined> {
+    const [claim] = await db.select().from(claims).where(eq(claims.id, id));
+    return claim;
+  }
+
+  async getClaimByClaimId(claimId: string): Promise<Claim | undefined> {
+    const [claim] = await db.select().from(claims).where(eq(claims.claimId, claimId));
+    return claim;
+  }
+
+  async createClaim(claim: InsertClaim): Promise<Claim> {
+    const [newClaim] = await db.insert(claims).values(claim).returning();
+    return newClaim;
+  }
+
+  async updateClaim(id: number, updates: Partial<Claim>): Promise<Claim | undefined> {
+    const [updatedClaim] = await db
+      .update(claims)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+        submittedAt: updates.status === ClaimStatus.SUBMITTED ? new Date() : undefined,
+        approvedAt: updates.status === ClaimStatus.APPROVED ? new Date() : undefined,
+        rejectedAt: updates.status === ClaimStatus.REJECTED ? new Date() : undefined,
+        paidAt: updates.status === ClaimStatus.PAID ? new Date() : undefined,
+      })
+      .where(eq(claims.id, id))
+      .returning();
+    
+    return updatedClaim;
+  }
+
+  async getAllClaims(): Promise<Claim[]> {
+    return await db.select().from(claims);
+  }
+
+  async getClaimsByUserId(userId: number): Promise<Claim[]> {
+    return await db.select().from(claims).where(eq(claims.userId, userId));
+  }
+
+  async getClaimsByStatus(status: string): Promise<Claim[]> {
+    return await db.select().from(claims).where(eq(claims.status, status));
+  }
+
+  async getClaimsByUserIdAndStatus(userId: number, status: string): Promise<Claim[]> {
+    return await db
+      .select()
+      .from(claims)
+      .where(and(eq(claims.userId, userId), eq(claims.status, status)));
+  }
+
+  async getClaimsForApproval(approverId: number): Promise<Claim[]> {
+    return await db
+      .select()
+      .from(claims)
+      .where(
+        and(
+          eq(claims.currentApproverId, approverId),
+          eq(claims.status, ClaimStatus.SUBMITTED)
+        )
+      );
+  }
+
+  // Approval methods
+  async createApproval(approval: InsertApproval): Promise<Approval> {
+    const [newApproval] = await db.insert(approvals).values(approval).returning();
+    return newApproval;
+  }
+
+  async getApprovalsByClaimId(claimId: number): Promise<Approval[]> {
+    return await db
+      .select()
+      .from(approvals)
+      .where(eq(approvals.claimId, claimId))
+      .orderBy(approvals.createdAt);
+  }
+
+  async updateApproval(id: number, updates: Partial<Approval>): Promise<Approval | undefined> {
+    const [updatedApproval] = await db
+      .update(approvals)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(approvals.id, id))
+      .returning();
+    
+    return updatedApproval;
+  }
+
+  // Organization Hierarchy methods
+  async getOrgHierarchy(id: number): Promise<any> {
+    const [hierarchy] = await db
+      .select()
+      .from(organizationHierarchy)
+      .where(eq(organizationHierarchy.id, id));
+    
+    return hierarchy;
+  }
+
+  async createOrgHierarchy(hierarchy: any): Promise<any> {
+    const [newHierarchy] = await db
+      .insert(organizationHierarchy)
+      .values(hierarchy)
+      .returning();
+    
+    return newHierarchy;
+  }
+
+  async getApproversByDepartment(departmentId: string, level: ApprovalLevel): Promise<User[]> {
+    // Find users who can approve for this department at this level
+    // Join with organization_hierarchy table to get approval levels
+    const result = await db
+      .select()
+      .from(users)
+      .innerJoin(
+        organizationHierarchy,
+        eq(users.id, organizationHierarchy.userId)
+      )
+      .where(
+        and(
+          eq(users.department, departmentId),
+          eq(organizationHierarchy.approvalLevel, level),
+          eq(organizationHierarchy.canApprove, true)
+        )
+      );
+    
+    return result.map(r => r.users);
+  }
+
+  async getNextApprover(userId: number, departmentId: string, businessUnitId: string, amount: number): Promise<User | undefined> {
+    // First try to get the user's direct manager
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    if (user.managerId) {
+      const manager = await this.getUser(user.managerId);
+      if (manager) return manager;
+    }
+
+    // If no direct manager, find based on approval hierarchy
+    let level: ApprovalLevel = ApprovalLevels.MANAGER;
+    
+    // Determine the required approval level based on amount
+    if (amount > 50000) {
+      level = ApprovalLevels.CXO;
+    } else if (amount > 25000) {
+      level = ApprovalLevels.DIRECTOR;
+    } else if (amount > 10000) {
+      level = ApprovalLevels.FINANCE;
+    }
+
+    // Get approvers at the determined level
+    const approvers = await this.getApproversByDepartment(departmentId, level);
+    return approvers.length > 0 ? approvers[0] : undefined;
+  }
+
+  async getApprovalChain(departmentId: string, businessUnitId: string, amount: number): Promise<User[]> {
+    const approvalChain: User[] = [];
+    
+    for (const level of Object.values(ApprovalLevels)) {
+      if (typeof level === 'number') {
+        const approvers = await this.getApproversByDepartment(departmentId, level);
+        if (approvers.length > 0) {
+          approvalChain.push(approvers[0]);
+        }
+      }
+    }
+    
+    return approvalChain;
+  }
+}
+
+// Use the database storage implementation
+export const storage = new DatabaseStorage();
