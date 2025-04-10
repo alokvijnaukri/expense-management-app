@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { otherClaimsSchema } from "@shared/schema";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -31,7 +31,7 @@ import { UploadCloud, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function OtherClaimsForm() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
