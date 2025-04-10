@@ -143,11 +143,11 @@ export default function Settings() {
       name: "Travel Expense", 
       description: "Form for travel related expense claims",
       fields: [
-        { id: "1", name: "tripPurpose", label: "Trip Purpose", type: "text", required: true, placeholder: "Enter the purpose of your trip" },
-        { id: "2", name: "travelDate", label: "Travel Date", type: "date", required: true },
-        { id: "3", name: "returnDate", label: "Return Date", type: "date", required: true },
-        { id: "4", name: "destination", label: "Destination", type: "text", required: true },
-        { id: "5", name: "travelMode", label: "Mode of Travel", type: "select", required: true, 
+        { id: "1", name: "tripPurpose", label: "Trip Purpose", type: FieldType.TEXT, required: true, placeholder: "Enter the purpose of your trip" },
+        { id: "2", name: "travelDate", label: "Travel Date", type: FieldType.DATE, required: true },
+        { id: "3", name: "returnDate", label: "Return Date", type: FieldType.DATE, required: true },
+        { id: "4", name: "destination", label: "Destination", type: FieldType.TEXT, required: true },
+        { id: "5", name: "travelMode", label: "Mode of Travel", type: FieldType.SELECT, required: true, 
           options: [
             { value: "air", label: "Air" },
             { value: "train", label: "Train" },
@@ -156,13 +156,13 @@ export default function Settings() {
             { value: "others", label: "Others" }
           ] 
         },
-        { id: "6", name: "accommodation", label: "Accommodation Expense", type: "number", required: true },
-        { id: "7", name: "foodExpense", label: "Food Expense", type: "number", required: true },
-        { id: "8", name: "localTravel", label: "Local Travel Expense", type: "number", required: true },
-        { id: "9", name: "otherExpense", label: "Other Expenses", type: "number", required: false },
-        { id: "10", name: "totalAmount", label: "Total Amount", type: "number", required: true },
-        { id: "11", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true },
-        { id: "12", name: "additionalInfo", label: "Additional Information", type: "textarea", required: false }
+        { id: "6", name: "accommodation", label: "Accommodation Expense", type: FieldType.NUMBER, required: true },
+        { id: "7", name: "foodExpense", label: "Food Expense", type: FieldType.NUMBER, required: true },
+        { id: "8", name: "localTravel", label: "Local Travel Expense", type: FieldType.NUMBER, required: true },
+        { id: "9", name: "otherExpense", label: "Other Expenses", type: FieldType.NUMBER, required: false },
+        { id: "10", name: "totalAmount", label: "Total Amount", type: FieldType.NUMBER, required: true },
+        { id: "11", name: "receiptsAttached", label: "Receipts Attached", type: FieldType.CHECKBOX, required: true },
+        { id: "12", name: "additionalInfo", label: "Additional Information", type: FieldType.TEXTAREA, required: false }
       ]
     },
     { 
@@ -170,9 +170,9 @@ export default function Settings() {
       name: "Business Promotion", 
       description: "Form for business promotion expense claims",
       fields: [
-        { id: "1", name: "clientName", label: "Client Name", type: "text", required: true },
-        { id: "2", name: "eventDate", label: "Event Date", type: "date", required: true },
-        { id: "3", name: "eventType", label: "Event Type", type: "select", required: true,
+        { id: "1", name: "clientName", label: "Client Name", type: FieldType.TEXT, required: true },
+        { id: "2", name: "eventDate", label: "Event Date", type: FieldType.DATE, required: true },
+        { id: "3", name: "eventType", label: "Event Type", type: FieldType.SELECT, required: true,
           options: [
             { value: "lunch", label: "Business Lunch" },
             { value: "dinner", label: "Business Dinner" },
@@ -180,11 +180,11 @@ export default function Settings() {
             { value: "others", label: "Others" }
           ]
         },
-        { id: "4", name: "location", label: "Location", type: "text", required: true },
-        { id: "5", name: "purpose", label: "Business Purpose", type: "textarea", required: true },
-        { id: "6", name: "amount", label: "Amount Spent", type: "number", required: true },
-        { id: "7", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: true },
-        { id: "8", name: "additionalInfo", label: "Additional Information", type: "textarea", required: false }
+        { id: "4", name: "location", label: "Location", type: FieldType.TEXT, required: true },
+        { id: "5", name: "purpose", label: "Business Purpose", type: FieldType.TEXTAREA, required: true },
+        { id: "6", name: "amount", label: "Amount Spent", type: FieldType.NUMBER, required: true },
+        { id: "7", name: "receiptsAttached", label: "Receipts Attached", type: FieldType.CHECKBOX, required: true },
+        { id: "8", name: "additionalInfo", label: "Additional Information", type: FieldType.TEXTAREA, required: false }
       ]
     },
     { 
@@ -192,11 +192,11 @@ export default function Settings() {
       name: "Conveyance Claim", 
       description: "Form for local transportation expense claims",
       fields: [
-        { id: "1", name: "date", label: "Date", type: "date", required: true },
-        { id: "2", name: "fromLocation", label: "From Location", type: "text", required: true },
-        { id: "3", name: "toLocation", label: "To Location", type: "text", required: true },
-        { id: "4", name: "purpose", label: "Purpose", type: "text", required: true },
-        { id: "5", name: "modeOfTransport", label: "Mode of Transport", type: "select", required: true,
+        { id: "1", name: "date", label: "Date", type: FieldType.DATE, required: true },
+        { id: "2", name: "fromLocation", label: "From Location", type: FieldType.TEXT, required: true },
+        { id: "3", name: "toLocation", label: "To Location", type: FieldType.TEXT, required: true },
+        { id: "4", name: "purpose", label: "Purpose", type: FieldType.TEXT, required: true },
+        { id: "5", name: "modeOfTransport", label: "Mode of Transport", type: FieldType.SELECT, required: true,
           options: [
             { value: "taxi", label: "Taxi" },
             { value: "auto", label: "Auto Rickshaw" },
@@ -206,10 +206,10 @@ export default function Settings() {
             { value: "others", label: "Others" }
           ]
         },
-        { id: "6", name: "distance", label: "Distance (KM)", type: "number", required: false },
-        { id: "7", name: "amount", label: "Amount", type: "number", required: true },
-        { id: "8", name: "receiptsAttached", label: "Receipts Attached", type: "checkbox", required: false },
-        { id: "9", name: "remarks", label: "Remarks", type: "textarea", required: false }
+        { id: "6", name: "distance", label: "Distance (KM)", type: FieldType.NUMBER, required: false },
+        { id: "7", name: "amount", label: "Amount", type: FieldType.NUMBER, required: true },
+        { id: "8", name: "receiptsAttached", label: "Receipts Attached", type: FieldType.CHECKBOX, required: false },
+        { id: "9", name: "remarks", label: "Remarks", type: FieldType.TEXTAREA, required: false }
       ]
     },
     { 
@@ -217,7 +217,7 @@ export default function Settings() {
       name: "Mobile Bill", 
       description: "Form for mobile bill reimbursement claims",
       fields: [
-        { id: "1", name: "billingMonth", label: "Billing Month", type: "select", required: true,
+        { id: "1", name: "billingMonth", label: "Billing Month", type: FieldType.SELECT, required: true,
           options: [
             { value: "jan", label: "January" },
             { value: "feb", label: "February" },
@@ -359,7 +359,7 @@ export default function Settings() {
       id: `new-${fields.length + 1}`, 
       name: "", 
       label: "", 
-      type: "text" as const, 
+      type: FieldType.TEXT, 
       required: false 
     };
     
