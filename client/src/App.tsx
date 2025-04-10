@@ -58,11 +58,11 @@ function RoutesWithAuth() {
       <ProtectedRoute path="/approved-claims" component={ApprovedClaims} />
       <ProtectedRoute path="/rejected-claims" component={RejectedClaims} />
       <ProtectedRoute path="/profile" component={Profile} />
+      <ProtectedRoute path="/settings" component={Settings} />
       
       {/* Role-restricted routes */}
       {isManager && <ProtectedRoute path="/approval-queue" component={ApprovalQueue} />}
       {isFinance && <ProtectedRoute path="/reports" component={Reports} />}
-      {isAdmin && <ProtectedRoute path="/settings" component={Settings} />}
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
