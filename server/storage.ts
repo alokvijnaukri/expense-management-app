@@ -40,6 +40,7 @@ export interface IStorage {
   // Approval methods
   createApproval(approval: InsertApproval): Promise<Approval>;
   getApprovalsByClaimId(claimId: number): Promise<Approval[]>;
+  getApprovalsByApproverId(approverId: number): Promise<Approval[]>;
   updateApproval(id: number, updates: Partial<Approval>): Promise<Approval | undefined>;
   
   // Organization Hierarchy methods
@@ -447,6 +448,12 @@ export class MemStorage implements IStorage {
     return Array.from(this.approvalsMap.values()).filter(
       (approval) => approval.claimId === claimId
     );
+  }
+  
+  async getApprovalsByApproverId(approverId: number): Promise<Approval[]> {
+    return Array.from(this.approvalsMap.values())
+      .filter((approval) => approval.approverId === approverId)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   }
 
   async updateApproval(id: number, updates: Partial<Approval>): Promise<Approval | undefined> {
@@ -929,6 +936,14 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedApproval;
+  }
+  
+  async getApprovalsByApproverId(approverId: number): Promise<Approval[]> {
+    return await db
+      .select()
+      .from(approvals)
+      .where(eq(approvals.approverId, approverId))
+      .orderBy(desc(approvals.updatedAt));
   }
 
   // Organization Hierarchy methods
