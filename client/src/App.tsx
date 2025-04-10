@@ -14,7 +14,31 @@ import { AuthProvider } from "./hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
 
-function Router() {
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const { user } = useAuth();
+  
+  return (
+    <>
+      {user ? (
+        <AppLayout>
+          <RoutesWithAuth />
+        </AppLayout>
+      ) : (
+        <Routes />
+      )}
+    </>
+  );
+}
+
+function RoutesWithAuth() {
   const { user } = useAuth();
   const isManager = user?.role === "manager" || user?.role === "finance" || user?.role === "admin";
   const isFinance = user?.role === "finance" || user?.role === "admin";
@@ -44,27 +68,26 @@ function Router() {
   );
 }
 
-function AppRoutes() {
-  const { user } = useAuth();
-  
+function Routes() {
   return (
-    <>
-      {user ? (
-        <AppLayout>
-          <Router />
-        </AppLayout>
-      ) : (
-        <Router />
-      )}
-    </>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <Switch>
+      {/* Auth route */}
+      <Route path="/auth" component={AuthPage} />
+      
+      {/* Protected routes - redirect to auth */}
+      <ProtectedRoute path="/" component={Home} />
+      <ProtectedRoute path="/new-claim" component={NewClaim} />
+      <ProtectedRoute path="/new-claim/:type" component={NewClaim} />
+      <ProtectedRoute path="/pending-claims" component={PendingClaims} />
+      <ProtectedRoute path="/approved-claims" component={ApprovedClaims} />
+      <ProtectedRoute path="/rejected-claims" component={RejectedClaims} />
+      <ProtectedRoute path="/approval-queue" component={ApprovalQueue} />
+      <ProtectedRoute path="/reports" component={Reports} />
+      <ProtectedRoute path="/settings" component={Settings} />
+      
+      {/* Fallback to 404 */}
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
