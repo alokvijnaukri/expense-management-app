@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { useUser } from "../../components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
 interface AppLayoutProps {
@@ -10,7 +10,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isLoading } = useUser();
+  const { isLoading } = useAuth();
 
   // Update sidebar state on window resize
   useEffect(() => {

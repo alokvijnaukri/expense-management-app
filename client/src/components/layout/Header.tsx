@@ -1,5 +1,5 @@
 import React from "react";
-import { useUser } from "../../components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,8 +19,9 @@ import {
   UserIcon,
   ChevronDownIcon,
   MenuIcon,
+  Loader2,
 } from "lucide-react";
-import { type UserRole } from "../../components/auth/UserProvider";
+import { UserRoles } from "@shared/schema";
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -28,12 +29,10 @@ interface HeaderProps {
 }
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
-  const { user, logout, switchRole } = useUser();
+  const { user, logoutMutation } = useAuth();
 
-  const handleRoleChange = (role: string) => {
-    if (typeof switchRole === 'function') {
-      switchRole(role as UserRole);
-    }
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
 
   return (
@@ -48,29 +47,12 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
           </button>
           <h1 className="text-lg font-semibold ml-2 hidden sm:block">
             <span className="text-primary">Expen</span>
-            <span className="text-neutral-700">Sense</span>
+            <span className="text-neutral-700">Flow</span>
           </h1>
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* User role switcher (for demo) */}
-          <div className="hidden md:block">
-            <Select
-              defaultValue={user?.role || "employee"}
-              onValueChange={handleRoleChange}
-            >
-              <SelectTrigger className="bg-neutral-100 border border-neutral-200 rounded-md text-sm py-1 h-8 w-32">
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="employee">Employee</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-                <SelectItem value="admin">HR/Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+          {/* Notifications button */}
           <button className="text-neutral-500 hover:text-primary">
             <BellIcon className="h-5 w-5" />
           </button>
@@ -78,10 +60,10 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center focus:outline-none">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
-                {user?.name.charAt(0)}
-                {user?.name.split(" ")[1]?.charAt(0)}
+                {user?.name ? user.name.charAt(0) : "?"}
+                {user?.name ? (user.name.split(" ")[1]?.charAt(0) || "") : ""}
               </div>
-              <span className="hidden md:block ml-2 text-sm">{user?.name}</span>
+              <span className="hidden md:block ml-2 text-sm">{user?.name || "User"}</span>
               <ChevronDownIcon className="h-4 w-4 ml-1" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -91,7 +73,12 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               </DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout} disabled={logoutMutation.isPending}>
+                {logoutMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Sign out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
