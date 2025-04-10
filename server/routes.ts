@@ -1,8 +1,9 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { ZodError } from "zod";
+import { setupAuth } from "./auth";
 import { 
   insertClaimSchema, 
   insertApprovalSchema, 
@@ -17,55 +18,21 @@ import {
 import { formatZodError } from "../shared/utils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth routes
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ message: "Username and password are required" });
-    }
-
-    const user = await storage.getUserByUsername(username);
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // In a real app, we would use proper authentication with JWT or sessions
-    return res.status(200).json({
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      role: user.role,
-      department: user.department,
-      designation: user.designation,
-      branch: user.branch,
-      eCode: user.eCode,
-      band: user.band,
-      businessUnit: user.businessUnit,
-    });
-  });
+  // Set up authentication
+  setupAuth(app);
+  // The auth routes are now handled by passport in auth.ts
 
   // User routes
-  app.get("/api/users/me", async (req: Request, res: Response) => {
-    // In a real app, we would get the user from session/token
-    // For demo purposes, let's assume we're currently logged in as "employee"
-    const user = await storage.getUserByUsername("employee");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+  app.get("/api/users/me", (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
-
-    return res.status(200).json({
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      role: user.role,
-      department: user.department,
-      designation: user.designation,
-      branch: user.branch,
-      eCode: user.eCode,
-      band: user.band,
-      businessUnit: user.businessUnit,
-    });
+    
+    const user = req.user as Express.User;
+    // Remove sensitive data like password
+    const { password, ...userResponse } = user;
+    
+    return res.status(200).json(userResponse);
   });
 
   app.get("/api/users/:id", async (req: Request, res: Response) => {

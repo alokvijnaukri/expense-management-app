@@ -8,7 +8,15 @@ import {
 // modify the interface with any CRUD methods
 // you might need
 
+import session from "express-session";
+import createMemoryStore from "memorystore";
+
+const MemoryStore = createMemoryStore(session);
+
 export interface IStorage {
+  // Session store
+  sessionStore: session.Store;
+  
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -40,6 +48,7 @@ export class MemStorage implements IStorage {
   private claimIdCounter: number;
   private approvalIdCounter: number;
   private claimIdPrefix: string;
+  public sessionStore: session.Store;
 
   constructor() {
     this.usersMap = new Map();
@@ -49,6 +58,11 @@ export class MemStorage implements IStorage {
     this.claimIdCounter = 1;
     this.approvalIdCounter = 1;
     this.claimIdPrefix = "EXP-2023-";
+    
+    // Initialize session store
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
     
     // Initialize with some demo users
     this.initializeDemoData();
