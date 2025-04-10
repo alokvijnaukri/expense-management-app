@@ -93,9 +93,16 @@ export default function ApprovalQueue() {
         description: `The claim ${selectedClaim.claimId} has been approved successfully.`,
       });
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/claims/approval"] });
+      // Clear the selected claim immediately to update UI
+      setSelectedClaim(null);
+      
+      // Invalidate all queries to ensure complete refresh
+      queryClient.invalidateQueries();
+      
+      // Force refetch of specific approval queue data
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/claims/approval", user?.id] 
+      });
 
       // Close modal
       handleCloseModal();
@@ -138,9 +145,16 @@ export default function ApprovalQueue() {
         description: `The claim ${selectedClaim.claimId} has been rejected.`,
       });
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/claims/approval"] });
+      // Clear the selected claim immediately to update UI
+      setSelectedClaim(null);
+      
+      // Invalidate all queries to ensure complete refresh
+      queryClient.invalidateQueries();
+      
+      // Force refetch of specific approval queue data
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/claims/approval", user?.id] 
+      });
 
       // Close modal
       handleCloseModal();
