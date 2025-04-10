@@ -2,7 +2,7 @@ import {
   type User, type InsertUser, users,
   type Claim, type InsertClaim, claims,
   type Approval, type InsertApproval, approvals,
-  ClaimStatus, UserRoles, ClaimTypes
+  ClaimStatus, UserRoles, ClaimTypes, ApprovalLevels
 } from "@shared/schema";
 
 // modify the interface with any CRUD methods
@@ -76,12 +76,18 @@ export class MemStorage implements IStorage {
     });
     
     // Initialize with some demo users
-    this.initializeDemoData();
+    (async () => {
+      try {
+        await this.initializeDemoData();
+      } catch (error) {
+        console.error("Error initializing demo data:", error);
+      }
+    })();
   }
 
-  private initializeDemoData() {
+  private async initializeDemoData() {
     // Add demo users
-    const admin = this.createUser({
+    const admin = await this.createUser({
       username: "admin",
       password: "admin123",
       name: "Admin User",
@@ -96,7 +102,7 @@ export class MemStorage implements IStorage {
       managerId: undefined,
     });
 
-    const financeManager = this.createUser({
+    const financeManager = await this.createUser({
       username: "finance",
       password: "finance123",
       name: "Finance Manager",
@@ -111,7 +117,7 @@ export class MemStorage implements IStorage {
       managerId: admin.id,
     });
 
-    const manager = this.createUser({
+    const manager = await this.createUser({
       username: "manager",
       password: "manager123",
       name: "John Manager",
@@ -126,7 +132,7 @@ export class MemStorage implements IStorage {
       managerId: financeManager.id,
     });
 
-    const employee = this.createUser({
+    const employee = await this.createUser({
       username: "employee",
       password: "employee123",
       name: "John Doe",
@@ -142,134 +148,143 @@ export class MemStorage implements IStorage {
     });
 
     // Add some demo claims
-    const demoClaimIds = [
-      this.createClaim({
-        claimId: this.generateClaimId(),
-        userId: employee.id,
-        type: ClaimTypes.TRAVEL,
-        status: ClaimStatus.SUBMITTED,
-        totalAmount: 12500,
-        details: {
-          destination: "Mumbai to Bangalore",
-          purpose: "Client Meeting",
-          departureDate: "2023-10-10",
-          returnDate: "2023-10-12",
-          travelMode: "flight",
-          travelClass: "economy",
-          advanceAmount: 0,
-          expenses: [
-            {
-              date: "2023-10-10",
-              category: "flight",
-              description: "Flight tickets",
-              amount: 8500,
-              receipt: "receipt1.pdf"
-            },
-            {
-              date: "2023-10-10",
-              category: "hotel",
-              description: "Hotel stay",
-              amount: 4000,
-              receipt: "receipt2.pdf"
-            }
-          ],
-          checklist: {
-            receiptsAttached: true,
-            policyCompliance: true,
-            detailsAccurate: true
+    const claim1 = await this.createClaim({
+      claimId: this.generateClaimId(),
+      userId: employee.id,
+      type: ClaimTypes.TRAVEL,
+      status: ClaimStatus.SUBMITTED,
+      totalAmount: 12500,
+      details: {
+        destination: "Mumbai to Bangalore",
+        purpose: "Client Meeting",
+        departureDate: "2023-10-10",
+        returnDate: "2023-10-12",
+        travelMode: "flight",
+        travelClass: "economy",
+        advanceAmount: 0,
+        expenses: [
+          {
+            date: "2023-10-10",
+            category: "flight",
+            description: "Flight tickets",
+            amount: 8500,
+            receipt: "receipt1.pdf"
           },
-          additionalNotes: "Client meeting with XYZ Corp"
+          {
+            date: "2023-10-10",
+            category: "hotel",
+            description: "Hotel stay",
+            amount: 4000,
+            receipt: "receipt2.pdf"
+          }
+        ],
+        checklist: {
+          receiptsAttached: true,
+          policyCompliance: true,
+          detailsAccurate: true
         },
-        notes: "Awaiting manager approval",
-        currentApproverId: manager.id,
-      }),
-      this.createClaim({
-        claimId: this.generateClaimId(),
-        userId: employee.id,
-        type: ClaimTypes.MOBILE_BILL,
-        status: ClaimStatus.APPROVED,
-        totalAmount: 1450,
-        approvedAmount: 1450,
-        details: {
-          period: "September 2023",
-          totalBill: 1450,
-          deductions: 0,
-          gstAmount: 221.19,
-          netClaim: 1450,
-          isdCalls: false,
-          billAttachment: "mobile_bill_sept.pdf"
-        },
-        notes: "Approved by manager",
-        currentApproverId: null,
-      }),
-      this.createClaim({
-        claimId: this.generateClaimId(),
-        userId: employee.id,
-        type: ClaimTypes.CONVEYANCE,
-        status: ClaimStatus.APPROVED,
-        totalAmount: 880,
-        approvedAmount: 880,
-        details: {
-          date: "2023-09-28",
-          fromLocation: "Office",
-          toLocation: "Client Site",
-          distance: 22,
-          vehicleType: "car",
-          purpose: "Client Meeting",
-          ratePerKm: 40,
-          totalAmount: 880
-        },
-        notes: "Approved and payment completed",
-        currentApproverId: null,
-      }),
-      this.createClaim({
-        claimId: this.generateClaimId(),
-        userId: employee.id,
-        type: ClaimTypes.BUSINESS_PROMOTION,
-        status: ClaimStatus.REJECTED,
-        totalAmount: 3080,
-        approvedAmount: 0,
-        details: {
-          clientName: "ABC Corp",
-          eventDate: "2023-09-22",
-          expenseType: "food",
-          totalCost: 3080,
-          attendees: 4,
-          costPerPerson: 770,
-          purpose: "Business Discussion"
-        },
-        notes: "Rejected due to exceeding per person limit",
-        currentApproverId: null,
-      })
-    ];
+        additionalNotes: "Client meeting with XYZ Corp"
+      },
+      notes: "Awaiting manager approval",
+      currentApproverId: manager.id,
+    });
+    
+    const claim2 = await this.createClaim({
+      claimId: this.generateClaimId(),
+      userId: employee.id,
+      type: ClaimTypes.MOBILE_BILL,
+      status: ClaimStatus.APPROVED,
+      totalAmount: 1450,
+      details: {
+        period: "September 2023",
+        totalBill: 1450,
+        deductions: 0,
+        gstAmount: 221.19,
+        netClaim: 1450,
+        isdCalls: false,
+        billAttachment: "mobile_bill_sept.pdf"
+      },
+      notes: "Approved by manager",
+      currentApproverId: null,
+      approvedAmount: 1450,
+    });
+    
+    const claim3 = await this.createClaim({
+      claimId: this.generateClaimId(),
+      userId: employee.id,
+      type: ClaimTypes.CONVEYANCE,
+      status: ClaimStatus.APPROVED,
+      totalAmount: 880,
+      details: {
+        date: "2023-09-28",
+        fromLocation: "Office",
+        toLocation: "Client Site",
+        distance: 22,
+        vehicleType: "car",
+        purpose: "Client Meeting",
+        ratePerKm: 40,
+        totalAmount: 880
+      },
+      notes: "Approved and payment completed",
+      currentApproverId: null,
+      approvedAmount: 880,
+    });
+    
+    const claim4 = await this.createClaim({
+      claimId: this.generateClaimId(),
+      userId: employee.id,
+      type: ClaimTypes.BUSINESS_PROMOTION,
+      status: ClaimStatus.REJECTED,
+      totalAmount: 3080,
+      details: {
+        clientName: "ABC Corp",
+        eventDate: "2023-09-22",
+        expenseType: "food",
+        totalCost: 3080,
+        attendees: 4,
+        costPerPerson: 770,
+        purpose: "Business Discussion"
+      },
+      notes: "Rejected due to exceeding per person limit",
+      currentApproverId: null,
+      approvedAmount: 0,
+    });
 
     // Add demo approvals
-    this.createApproval({
-      claimId: demoClaimIds[0],
+    await this.createApproval({
+      claimId: claim1.id,
       approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
       status: "pending",
-      notes: ""
+      notes: "",
+      nextApproverId: financeManager.id
     });
 
-    this.createApproval({
-      claimId: demoClaimIds[1],
+    await this.createApproval({
+      claimId: claim2.id,
       approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
       status: "approved",
-      notes: "Approved as per policy"
+      notes: "Approved as per policy",
+      nextApproverId: null
     });
 
-    this.createApproval({
-      claimId: demoClaimIds[2],
+    await this.createApproval({
+      claimId: claim3.id,
       approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
       status: "approved",
-      notes: "Approved"
+      notes: "Approved",
+      nextApproverId: null
     });
 
-    this.createApproval({
-      claimId: demoClaimIds[3],
+    await this.createApproval({
+      claimId: claim4.id,
       approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
       status: "rejected",
-      notes: "Exceeds the per person limit for business meals"
+      notes: "Exceeds the per person limit for business meals",
+      nextApproverId: null
     });
   }
 
