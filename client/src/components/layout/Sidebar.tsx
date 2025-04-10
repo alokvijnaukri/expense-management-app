@@ -20,7 +20,7 @@ interface SidebarProps {
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const [location, navigate] = useLocation();
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const isActive = (path: string) => {
     return location === path;
@@ -127,15 +127,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         <div className="p-4 border-t border-neutral-200">
           <div className="flex items-center">
             <div className="relative w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-medium">
-              {user?.name.charAt(0)}
-              {user?.name.split(" ")[1]?.charAt(0)}
+              {user?.name ? user.name.charAt(0) : "?"}
+              {user?.name ? (user.name.split(" ")[1]?.charAt(0) || "") : ""}
               <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-neutral-700">
-                {user?.name}
+                {user?.name || "User"}
               </p>
-              <p className="text-xs text-neutral-400">{user?.designation}</p>
+              <p className="text-xs text-neutral-400">{user?.designation || "Loading..."}</p>
             </div>
           </div>
         </div>

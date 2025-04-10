@@ -9,7 +9,7 @@ import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
-  user: User | null;
+  user: User | null | undefined;
   isLoading: boolean;
   error: Error | null;
   loginMutation: UseMutationResult<User, Error, LoginData>;
@@ -49,7 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    // Ensure we never return undefined, only null when not authenticated
     select: (data) => data || null,
   });
 
