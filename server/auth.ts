@@ -22,12 +22,14 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  // Check if stored password contains a salt
+  // For demo accounts where we don't hash the password initially
+  // This allows us to use plain passwords for development
   if (!stored || !stored.includes(".")) {
-    // For demo accounts with plain text passwords
+    console.log("Using plain text password comparison for demo account");
     return supplied === stored;
   }
   
+  // For properly hashed passwords
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;

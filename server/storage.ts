@@ -583,6 +583,241 @@ export class DatabaseStorage implements IStorage {
       pool, 
       createTableIfMissing: true 
     });
+    
+    // Initialize with demo data
+    (async () => {
+      try {
+        await this.initializeDemoData();
+      } catch (error) {
+        console.error("Error initializing demo data:", error);
+      }
+    })();
+  }
+  
+  private async initializeDemoData() {
+    // Check if we have any users already
+    const existingUsers = await db.select().from(users);
+    if (existingUsers.length > 0) {
+      console.log("Database already has users, skipping demo data initialization");
+      return;
+    }
+
+    console.log("Initializing database with demo data...");
+    
+    // Add demo users
+    const admin = await this.createUser({
+      username: "admin",
+      password: "admin123",
+      name: "Admin User",
+      email: "admin@company.com",
+      department: "Administration",
+      designation: "Admin Manager",
+      branch: "Head Office",
+      eCode: "E001",
+      band: "B5",
+      businessUnit: "Administration",
+      role: UserRoles.ADMIN,
+    });
+
+    const financeManager = await this.createUser({
+      username: "finance",
+      password: "finance123",
+      name: "Finance Manager",
+      email: "finance@company.com",
+      department: "Finance",
+      designation: "Finance Manager",
+      branch: "Head Office",
+      eCode: "E002",
+      band: "B4",
+      businessUnit: "Finance",
+      role: UserRoles.FINANCE,
+      managerId: admin.id,
+    });
+
+    const manager = await this.createUser({
+      username: "manager",
+      password: "manager123",
+      name: "John Manager",
+      email: "manager@company.com",
+      department: "Engineering",
+      designation: "Engineering Manager",
+      branch: "Main Branch",
+      eCode: "E003",
+      band: "B3",
+      businessUnit: "Technology",
+      role: UserRoles.MANAGER,
+      managerId: financeManager.id,
+    });
+
+    const employee = await this.createUser({
+      username: "employee",
+      password: "employee123",
+      name: "John Doe",
+      email: "john.doe@company.com",
+      department: "Engineering",
+      designation: "Software Engineer",
+      branch: "Main Branch",
+      eCode: "E004",
+      band: "B2",
+      businessUnit: "Technology",
+      role: UserRoles.EMPLOYEE,
+      managerId: manager.id,
+    });
+    
+    // Generate claim ID prefix
+    const claimIdPrefix = "EXP-2023-";
+    const generateClaimId = (num: number) => {
+      return `${claimIdPrefix}${String(num + 100).padStart(4, '0')}`;
+    };
+
+    // Add some demo claims
+    const claim1 = await this.createClaim({
+      claimId: generateClaimId(1),
+      userId: employee.id,
+      type: ClaimTypes.TRAVEL,
+      status: ClaimStatus.SUBMITTED,
+      totalAmount: 12500,
+      details: {
+        destination: "Mumbai to Bangalore",
+        purpose: "Client Meeting",
+        departureDate: "2023-10-10",
+        returnDate: "2023-10-12",
+        travelMode: "flight",
+        travelClass: "economy",
+        advanceAmount: 0,
+        expenses: [
+          {
+            date: "2023-10-10",
+            category: "flight",
+            description: "Flight tickets",
+            amount: 8500,
+            receipt: "receipt1.pdf"
+          },
+          {
+            date: "2023-10-10",
+            category: "hotel",
+            description: "Hotel stay",
+            amount: 4000,
+            receipt: "receipt2.pdf"
+          }
+        ],
+        checklist: {
+          receiptsAttached: true,
+          policyCompliance: true,
+          detailsAccurate: true
+        },
+        additionalNotes: "Client meeting with XYZ Corp"
+      },
+      notes: "Awaiting manager approval",
+      currentApproverId: manager.id,
+    });
+    
+    const claim2 = await this.createClaim({
+      claimId: generateClaimId(2),
+      userId: employee.id,
+      type: ClaimTypes.MOBILE_BILL,
+      status: ClaimStatus.APPROVED,
+      totalAmount: 1450,
+      details: {
+        period: "September 2023",
+        totalBill: 1450,
+        deductions: 0,
+        gstAmount: 221.19,
+        netClaim: 1450,
+        isdCalls: false,
+        billAttachment: "mobile_bill_sept.pdf"
+      },
+      notes: "Approved by manager",
+      currentApproverId: null,
+    });
+    
+    // Update to add approved amount
+    await db.update(claims).set({
+      approvedAmount: 1450,
+    }).where(eq(claims.id, claim2.id));
+    
+    const claim3 = await this.createClaim({
+      claimId: generateClaimId(3),
+      userId: employee.id,
+      type: ClaimTypes.CONVEYANCE,
+      status: ClaimStatus.APPROVED,
+      totalAmount: 880,
+      details: {
+        date: "2023-09-28",
+        fromLocation: "Office",
+        toLocation: "Client Site",
+        distance: 22,
+        vehicleType: "car",
+        purpose: "Client Meeting",
+        ratePerKm: 40,
+        totalAmount: 880
+      },
+      notes: "Approved and payment completed",
+      currentApproverId: null,
+    });
+    
+    // Update to add approved amount
+    await db.update(claims).set({
+      approvedAmount: 880,
+    }).where(eq(claims.id, claim3.id));
+    
+    const claim4 = await this.createClaim({
+      claimId: generateClaimId(4),
+      userId: employee.id,
+      type: ClaimTypes.BUSINESS_PROMOTION,
+      status: ClaimStatus.REJECTED,
+      totalAmount: 3080,
+      details: {
+        clientName: "ABC Corp",
+        eventDate: "2023-09-22",
+        expenseType: "food",
+        totalCost: 3080,
+        attendees: 4,
+        costPerPerson: 770,
+        purpose: "Business Discussion"
+      },
+      notes: "Rejected due to exceeding per person limit",
+      currentApproverId: null,
+    });
+
+    // Add demo approvals
+    await this.createApproval({
+      claimId: claim1.id,
+      approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
+      status: "pending",
+      notes: "",
+      nextApproverId: financeManager.id
+    });
+
+    await this.createApproval({
+      claimId: claim2.id,
+      approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
+      status: "approved",
+      notes: "Approved as per policy",
+      nextApproverId: null
+    });
+
+    await this.createApproval({
+      claimId: claim3.id,
+      approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
+      status: "approved",
+      notes: "Approved",
+      nextApproverId: null
+    });
+
+    await this.createApproval({
+      claimId: claim4.id,
+      approverId: manager.id,
+      approvalLevel: ApprovalLevels.MANAGER,
+      status: "rejected",
+      notes: "Exceeds the per person limit for business meals",
+      nextApproverId: null
+    });
+    
+    console.log("Demo data initialization complete!");
   }
 
   // User methods
