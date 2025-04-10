@@ -12,6 +12,16 @@ export const UserRoles = {
 
 export type UserRole = (typeof UserRoles)[keyof typeof UserRoles];
 
+// Approval Levels
+export const ApprovalLevels = {
+  MANAGER: 1,
+  DIRECTOR: 2,
+  FINANCE: 3,
+  CXO: 4,
+} as const;
+
+export type ApprovalLevel = (typeof ApprovalLevels)[keyof typeof ApprovalLevels];
+
 // Claim Status
 export const ClaimStatus = {
   DRAFT: "draft",
@@ -90,13 +100,34 @@ export const insertClaimSchema = createInsertSchema(claims).omit({
   approvedAmount: true,
 });
 
+// Organizational Hierarchy Schema
+export const organizationHierarchy = pgTable("organization_hierarchy", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  approvalLevel: integer("approval_level").notNull(),
+  departmentId: text("department_id").notNull(),
+  businessUnitId: text("business_unit_id").notNull(),
+  canApprove: boolean("can_approve").notNull().default(true),
+  maxApprovalAmount: real("max_approval_amount"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertOrgHierarchySchema = createInsertSchema(organizationHierarchy).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Approvals Schema
 export const approvals = pgTable("approvals", {
   id: serial("id").primaryKey(),
   claimId: integer("claim_id").notNull().references(() => claims.id),
   approverId: integer("approver_id").notNull().references(() => users.id),
+  approvalLevel: integer("approval_level").notNull(),
   status: text("status").notNull().$type<"pending" | "approved" | "rejected">(),
   notes: text("notes"),
+  nextApproverId: integer("next_approver_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

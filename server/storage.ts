@@ -38,15 +38,24 @@ export interface IStorage {
   createApproval(approval: InsertApproval): Promise<Approval>;
   getApprovalsByClaimId(claimId: number): Promise<Approval[]>;
   updateApproval(id: number, updates: Partial<Approval>): Promise<Approval | undefined>;
+  
+  // Organization Hierarchy methods
+  getOrgHierarchy(id: number): Promise<any>;
+  createOrgHierarchy(hierarchy: any): Promise<any>;
+  getApproversByDepartment(departmentId: string, level: number): Promise<User[]>;
+  getNextApprover(userId: number, departmentId: string, businessUnitId: string, amount: number): Promise<User | undefined>;
+  getApprovalChain(departmentId: string, businessUnitId: string, amount: number): Promise<User[]>;
 }
 
 export class MemStorage implements IStorage {
   private usersMap: Map<number, User>;
   private claimsMap: Map<number, Claim>;
   private approvalsMap: Map<number, Approval>;
+  private orgHierarchyMap: Map<number, any>;
   private userIdCounter: number;
   private claimIdCounter: number;
   private approvalIdCounter: number;
+  private orgHierarchyIdCounter: number;
   private claimIdPrefix: string;
   public sessionStore: session.Store;
 
@@ -54,9 +63,11 @@ export class MemStorage implements IStorage {
     this.usersMap = new Map();
     this.claimsMap = new Map();
     this.approvalsMap = new Map();
+    this.orgHierarchyMap = new Map();
     this.userIdCounter = 1;
     this.claimIdCounter = 1;
     this.approvalIdCounter = 1;
+    this.orgHierarchyIdCounter = 1;
     this.claimIdPrefix = "EXP-2023-";
     
     // Initialize session store
@@ -395,6 +406,117 @@ export class MemStorage implements IStorage {
     
     this.approvalsMap.set(id, updatedApproval);
     return updatedApproval;
+  }
+
+  // Organization Hierarchy methods
+  async getOrgHierarchy(id: number): Promise<any> {
+    return this.orgHierarchyMap.get(id);
+  }
+
+  async createOrgHierarchy(hierarchy: any): Promise<any> {
+    const id = this.orgHierarchyIdCounter++;
+    const now = new Date();
+    const newHierarchy = { 
+      ...hierarchy, 
+      id, 
+      createdAt: now, 
+      updatedAt: now
+    };
+    this.orgHierarchyMap.set(id, newHierarchy);
+    return newHierarchy;
+  }
+
+  async getApproversByDepartment(departmentId: string, level: number): Promise<User[]> {
+    // Find users who can approve for this department at this level
+    const departmentApprovers = Array.from(this.usersMap.values()).filter(user => {
+      // Check if the user is in the same department and has appropriate role
+      if (user.department !== departmentId) return false;
+      
+      // Check role based on level
+      if (level === ApprovalLevels.MANAGER && user.role === UserRoles.MANAGER) return true;
+      if (level === ApprovalLevels.FINANCE && user.role === UserRoles.FINANCE) return true;
+      if (level === ApprovalLevels.DIRECTOR && user.role === UserRoles.MANAGER && user.band >= "B4") return true;
+      if (level === ApprovalLevels.CXO && user.role === UserRoles.ADMIN) return true;
+      
+      return false;
+    });
+    
+    return departmentApprovers;
+  }
+
+  async getNextApprover(userId: number, departmentId: string, businessUnitId: string, amount: number): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    // Get user's manager
+    if (user.managerId) {
+      const manager = await this.getUser(user.managerId);
+      if (manager) return manager;
+    }
+    
+    // If no direct manager found, find an approver based on amount threshold and department
+    let level = ApprovalLevels.MANAGER;
+    
+    // Determine approval level based on amount
+    if (amount > 50000) {
+      level = ApprovalLevels.CXO;
+    } else if (amount > 20000) {
+      level = ApprovalLevels.DIRECTOR;
+    } else if (amount > 5000) {
+      level = ApprovalLevels.FINANCE;
+    }
+    
+    // Get potential approvers for this level and department
+    const approvers = await this.getApproversByDepartment(departmentId, level);
+    
+    // Return the first available approver or undefined if none found
+    return approvers.length > 0 ? approvers[0] : undefined;
+  }
+
+  async getApprovalChain(departmentId: string, businessUnitId: string, amount: number): Promise<User[]> {
+    // Get the approval chain based on amount and department
+    const approvalChain: User[] = [];
+    
+    // For low amounts (<= 5000), just need manager approval
+    if (amount <= 5000) {
+      const managers = await this.getApproversByDepartment(departmentId, ApprovalLevels.MANAGER);
+      if (managers.length > 0) approvalChain.push(managers[0]);
+    }
+    // For medium amounts (5000-20000), need manager and finance approval
+    else if (amount <= 20000) {
+      const managers = await this.getApproversByDepartment(departmentId, ApprovalLevels.MANAGER);
+      if (managers.length > 0) approvalChain.push(managers[0]);
+      
+      const finance = await this.getApproversByDepartment("Finance", ApprovalLevels.FINANCE);
+      if (finance.length > 0) approvalChain.push(finance[0]);
+    }
+    // For high amounts (20000-50000), need manager, finance, and director approval
+    else if (amount <= 50000) {
+      const managers = await this.getApproversByDepartment(departmentId, ApprovalLevels.MANAGER);
+      if (managers.length > 0) approvalChain.push(managers[0]);
+      
+      const finance = await this.getApproversByDepartment("Finance", ApprovalLevels.FINANCE);
+      if (finance.length > 0) approvalChain.push(finance[0]);
+      
+      const directors = await this.getApproversByDepartment(departmentId, ApprovalLevels.DIRECTOR);
+      if (directors.length > 0) approvalChain.push(directors[0]);
+    }
+    // For very high amounts (>50000), need full approval chain including CXO
+    else {
+      const managers = await this.getApproversByDepartment(departmentId, ApprovalLevels.MANAGER);
+      if (managers.length > 0) approvalChain.push(managers[0]);
+      
+      const finance = await this.getApproversByDepartment("Finance", ApprovalLevels.FINANCE);
+      if (finance.length > 0) approvalChain.push(finance[0]);
+      
+      const directors = await this.getApproversByDepartment(departmentId, ApprovalLevels.DIRECTOR);
+      if (directors.length > 0) approvalChain.push(directors[0]);
+      
+      const cxos = await this.getApproversByDepartment("Administration", ApprovalLevels.CXO);
+      if (cxos.length > 0) approvalChain.push(cxos[0]);
+    }
+    
+    return approvalChain;
   }
 }
 
