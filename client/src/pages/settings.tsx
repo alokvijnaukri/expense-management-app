@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -12,121 +12,85 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Bell,
   Mail,
   Shield,
-  User,
   Palette,
   Monitor,
-  Lock,
   Smartphone,
-  Clock,
-  Languages,
-  HelpCircle,
 } from "lucide-react";
-
-const notificationSchema = z.object({
-  emailNotifications: z.boolean().default(true),
-  pushNotifications: z.boolean().default(true),
-  newClaimNotifications: z.boolean().default(true),
-  statusChangeNotifications: z.boolean().default(true),
-  reminderNotifications: z.boolean().default(true),
-  weeklyDigest: z.boolean().default(false),
-});
-
-const appearanceSchema = z.object({
-  theme: z.enum(["light", "dark", "system"]).default("system"),
-  language: z.enum(["english", "hindi", "spanish"]).default("english"),
-  compactMode: z.boolean().default(false),
-});
-
-const securitySchema = z.object({
-  currentPassword: z.string().min(6),
-  newPassword: z.string().min(8),
-  confirmPassword: z.string().min(8),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
 
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("notifications");
+  const [activeTab, setActiveTab] = React.useState("notifications");
+  
+  // Notification settings
+  const [emailNotifications, setEmailNotifications] = React.useState(true);
+  const [pushNotifications, setPushNotifications] = React.useState(true);
+  const [newClaimNotifications, setNewClaimNotifications] = React.useState(true);
+  const [statusChangeNotifications, setStatusChangeNotifications] = React.useState(true);
+  const [reminderNotifications, setReminderNotifications] = React.useState(true);
+  const [weeklyDigest, setWeeklyDigest] = React.useState(false);
+  
+  // Appearance settings
+  const [theme, setTheme] = React.useState("system");
+  const [language, setLanguage] = React.useState("english");
+  const [compactMode, setCompactMode] = React.useState(false);
+  
+  // Security settings
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
-  const notificationForm = useForm<z.infer<typeof notificationSchema>>({
-    resolver: zodResolver(notificationSchema),
-    defaultValues: {
-      emailNotifications: true,
-      pushNotifications: true,
-      newClaimNotifications: true,
-      statusChangeNotifications: true,
-      reminderNotifications: true,
-      weeklyDigest: false,
-    },
-  });
-
-  const appearanceForm = useForm<z.infer<typeof appearanceSchema>>({
-    resolver: zodResolver(appearanceSchema),
-    defaultValues: {
-      theme: "system",
-      language: "english",
-      compactMode: false,
-    },
-  });
-
-  const securityForm = useForm<z.infer<typeof securitySchema>>({
-    resolver: zodResolver(securitySchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  const onNotificationSubmit = (values: z.infer<typeof notificationSchema>) => {
+  const handleNotificationSave = () => {
     toast({
       title: "Notification settings saved",
       description: "Your notification preferences have been updated",
     });
   };
 
-  const onAppearanceSubmit = (values: z.infer<typeof appearanceSchema>) => {
+  const handleAppearanceSave = () => {
     toast({
       title: "Appearance settings saved",
       description: "Your appearance preferences have been updated",
     });
   };
 
-  const onSecuritySubmit = (values: z.infer<typeof securitySchema>) => {
+  const handleSecuritySave = () => {
+    if (newPassword.length < 8) {
+      toast({
+        title: "Password error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Password error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Password changed",
       description: "Your password has been updated successfully",
     });
-    securityForm.reset({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
   if (!user) {
@@ -171,153 +135,103 @@ export default function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...notificationForm}>
-                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-8">
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-medium">Delivery Channels</h3>
-                    <Separator />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="emailNotifications"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center">
-                              <Mail className="h-5 w-5 text-primary mr-2" />
-                              <FormLabel className="text-base">Email Notifications</FormLabel>
-                            </div>
-                            <FormDescription>
-                              Receive notifications via email
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="pushNotifications"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center">
-                              <Smartphone className="h-5 w-5 text-primary mr-2" />
-                              <FormLabel className="text-base">Push Notifications</FormLabel>
-                            </div>
-                            <FormDescription>
-                              Receive notifications on your device
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium">Delivery Channels</h3>
+                  <Separator />
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center">
+                        <Mail className="h-5 w-5 text-primary mr-2" />
+                        <label className="text-base font-medium">Email Notifications</label>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Receive notifications via email
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={emailNotifications}
+                      onCheckedChange={setEmailNotifications}
                     />
                   </div>
-
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-medium">Notification Types</h3>
-                    <Separator />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="newClaimNotifications"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">New Claim Notifications</FormLabel>
-                            <FormDescription>
-                              Get notified when new claims are submitted
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="statusChangeNotifications"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Status Change Notifications</FormLabel>
-                            <FormDescription>
-                              Get notified when claim status changes
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="reminderNotifications"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Reminder Notifications</FormLabel>
-                            <FormDescription>
-                              Get reminders for pending actions
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={notificationForm.control}
-                      name="weeklyDigest"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Weekly Digest</FormLabel>
-                            <FormDescription>
-                              Receive a weekly summary of activities
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center">
+                        <Smartphone className="h-5 w-5 text-primary mr-2" />
+                        <label className="text-base font-medium">Push Notifications</label>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Receive notifications on your device
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={pushNotifications}
+                      onCheckedChange={setPushNotifications}
                     />
                   </div>
+                </div>
 
-                  <Button type="submit">Save Notification Settings</Button>
-                </form>
-              </Form>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium">Notification Types</h3>
+                  <Separator />
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <label className="text-base font-medium">New Claim Notifications</label>
+                      <p className="text-sm text-muted-foreground">
+                        Get notified when new claims are submitted
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={newClaimNotifications}
+                      onCheckedChange={setNewClaimNotifications}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <label className="text-base font-medium">Status Change Notifications</label>
+                      <p className="text-sm text-muted-foreground">
+                        Get notified when claim status changes
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={statusChangeNotifications}
+                      onCheckedChange={setStatusChangeNotifications}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <label className="text-base font-medium">Reminder Notifications</label>
+                      <p className="text-sm text-muted-foreground">
+                        Get reminders for pending actions
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={reminderNotifications}
+                      onCheckedChange={setReminderNotifications}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <label className="text-base font-medium">Weekly Digest</label>
+                      <p className="text-sm text-muted-foreground">
+                        Receive a weekly summary of activities
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={weeklyDigest}
+                      onCheckedChange={setWeeklyDigest}
+                    />
+                  </div>
+                </div>
+
+                <Button onClick={handleNotificationSave}>Save Notification Settings</Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -331,95 +245,69 @@ export default function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...appearanceForm}>
-                <form onSubmit={appearanceForm.handleSubmit(onAppearanceSubmit)} className="space-y-8">
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-medium">Display Settings</h3>
-                    <Separator />
-                    
-                    <FormField
-                      control={appearanceForm.control}
-                      name="theme"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center">
-                              <Monitor className="h-5 w-5 text-primary mr-2" />
-                              <FormLabel className="text-base">Theme</FormLabel>
-                            </div>
-                            <FormDescription>
-                              Choose your preferred theme mode
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <select
-                              className="rounded-md border p-2 text-sm"
-                              value={field.value}
-                              onChange={field.onChange}
-                            >
-                              <option value="light">Light</option>
-                              <option value="dark">Dark</option>
-                              <option value="system">System</option>
-                            </select>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={appearanceForm.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center">
-                              <Languages className="h-5 w-5 text-primary mr-2" />
-                              <FormLabel className="text-base">Language</FormLabel>
-                            </div>
-                            <FormDescription>
-                              Choose your preferred language
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <select
-                              className="rounded-md border p-2 text-sm"
-                              value={field.value}
-                              onChange={field.onChange}
-                            >
-                              <option value="english">English</option>
-                              <option value="hindi">Hindi</option>
-                              <option value="spanish">Spanish</option>
-                            </select>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={appearanceForm.control}
-                      name="compactMode"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Compact Mode</FormLabel>
-                            <FormDescription>
-                              Use compact layout to show more information
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium">Display Settings</h3>
+                  <Separator />
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center">
+                        <Monitor className="h-5 w-5 text-primary mr-2" />
+                        <label className="text-base font-medium">Theme</label>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Choose your preferred theme mode
+                      </p>
+                    </div>
+                    <select
+                      className="rounded-md border p-2 text-sm"
+                      value={theme}
+                      onChange={(e) => setTheme(e.target.value)}
+                    >
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                      <option value="system">System</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center">
+                        <Palette className="h-5 w-5 text-primary mr-2" />
+                        <label className="text-base font-medium">Language</label>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Choose your preferred language
+                      </p>
+                    </div>
+                    <select
+                      className="rounded-md border p-2 text-sm"
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                    >
+                      <option value="english">English</option>
+                      <option value="hindi">Hindi</option>
+                      <option value="spanish">Spanish</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <label className="text-base font-medium">Compact Mode</label>
+                      <p className="text-sm text-muted-foreground">
+                        Use compact layout to show more information
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={compactMode}
+                      onCheckedChange={setCompactMode}
                     />
                   </div>
+                </div>
 
-                  <Button type="submit">Save Appearance Settings</Button>
-                </form>
-              </Form>
+                <Button onClick={handleAppearanceSave}>Save Appearance Settings</Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -433,61 +321,49 @@ export default function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...securityForm}>
-                <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-8">
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-medium">Change Password</h3>
-                    <Separator />
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium">Change Password</h3>
+                  <Separator />
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Current Password</label>
+                      <Input 
+                        type="password" 
+                        placeholder="Enter current password" 
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                      />
+                    </div>
                     
-                    <FormField
-                      control={securityForm.control}
-                      name="currentPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Current Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Enter current password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">New Password</label>
+                      <Input 
+                        type="password" 
+                        placeholder="Enter new password" 
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Password should be at least 8 characters
+                      </p>
+                    </div>
                     
-                    <FormField
-                      control={securityForm.control}
-                      name="newPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>New Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Enter new password" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Password should be at least 8 characters
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={securityForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Confirm new password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Confirm New Password</label>
+                      <Input 
+                        type="password" 
+                        placeholder="Confirm new password" 
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                    </div>
                   </div>
+                </div>
 
-                  <Button type="submit">Change Password</Button>
-                </form>
-              </Form>
+                <Button onClick={handleSecuritySave}>Change Password</Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
