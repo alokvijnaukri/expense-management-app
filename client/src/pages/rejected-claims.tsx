@@ -25,7 +25,7 @@ import {
 import { useLocation } from "wouter";
 
 export default function RejectedClaims() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");

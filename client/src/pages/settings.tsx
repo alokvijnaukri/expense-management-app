@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useUser } from "@/components/auth/UserProvider";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
