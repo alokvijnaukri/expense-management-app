@@ -65,7 +65,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       name: "Approval Queue",
       path: "/approval-queue",
       icon: <LayersIcon className="h-5 w-5 mr-3" />,
-      badge: 1,
+      badge: 24,
       roles: ["manager", "finance", "admin"],
     },
     {
