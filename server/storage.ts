@@ -23,10 +23,7 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByExternalId(externalId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  createUserFromExternalAuth(user: Omit<InsertUser, 'password'> & { externalId: string }): Promise<User>;
-  updateUser(id: number, updates: Partial<User>): Promise<User>;
   getAllUsers(): Promise<User[]>;
   
   // Claim methods
