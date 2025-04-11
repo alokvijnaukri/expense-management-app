@@ -16,6 +16,9 @@ export default function ApprovalTimeline() {
       return data;
     },
     enabled: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch data every 5 seconds
   });
 
   // Sort and filter claims for the timeline
