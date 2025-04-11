@@ -91,7 +91,7 @@ export default function RecentClaims() {
     .slice(0, 5);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm mb-8">
+    <div className="gradient-card mb-8">
       {/* Claim Details Modal */}
       <ClaimDetailsModal 
         claim={selectedClaim} 
@@ -99,9 +99,9 @@ export default function RecentClaims() {
         onOpenChange={setIsModalOpen} 
       />
 
-      <div className="p-6 border-b border-neutral-200">
+      <div className="p-6 border-b border-border/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-          <h3 className="text-lg font-semibold text-neutral-700">
+          <h3 className="text-lg font-bold text-gradient">
             Recent Claims
           </h3>
           <div className="mt-2 sm:mt-0 flex">
@@ -110,7 +110,7 @@ export default function RecentClaims() {
                 defaultValue="all"
                 onValueChange={setClaimTypeFilter}
               >
-                <SelectTrigger className="bg-neutral-100 border border-neutral-200 rounded-md text-sm h-9 w-36">
+                <SelectTrigger className="glass-card bg-background/50 border-border/40 text-sm h-9 w-36">
                   <SelectValue placeholder="All Claims" />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,7 +129,7 @@ export default function RecentClaims() {
                 defaultValue="30"
                 onValueChange={setDateFilter}
               >
-                <SelectTrigger className="bg-neutral-100 border border-neutral-200 rounded-md text-sm h-9 w-36">
+                <SelectTrigger className="glass-card bg-background/50 border-border/40 text-sm h-9 w-36">
                   <SelectValue placeholder="Last 30 Days" />
                 </SelectTrigger>
                 <SelectContent>
@@ -144,86 +144,86 @@ export default function RecentClaims() {
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-neutral-200">
-          <thead className="bg-neutral-50">
+        <table className="min-w-full divide-y divide-border/30">
+          <thead className="bg-subtle-gradient">
             <tr>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-foreground/70 uppercase tracking-wider"
               >
                 Claim ID
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-foreground/70 uppercase tracking-wider"
               >
                 Type
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-foreground/70 uppercase tracking-wider"
               >
                 Date
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-foreground/70 uppercase tracking-wider"
               >
                 Amount
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-foreground/70 uppercase tracking-wider"
               >
                 Status
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium text-foreground/70 uppercase tracking-wider"
               >
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-neutral-200">
+          <tbody className="bg-background/40 backdrop-blur-sm divide-y divide-border/20">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-neutral-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-muted-foreground">
                   Loading claims...
                 </td>
               </tr>
             ) : filteredClaims.length > 0 ? (
               filteredClaims.map((claim: any) => (
-                <tr key={claim.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-700">
+                <tr key={claim.id} className="hover:bg-primary/5 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                     {claim.claimId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {getIconForClaimType(claim.type)}
-                      <span className="text-sm">{claim.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</span>
+                      <span className="text-sm font-medium">{claim.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(claim.createdAt)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-foreground">
                     {formatCurrency(claim.totalAmount)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge status={claim.status} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                    <div className="flex space-x-2">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                    <div className="flex space-x-3">
                       <button
-                        className="text-primary hover:text-primary/80"
+                        className="text-primary hover:text-primary/80 transition-colors"
                         onClick={() => handleViewClick(claim.claimId)}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       {claim.status === "draft" || claim.status === "rejected" ? (
                         <button
-                          className="text-neutral-500 hover:text-neutral-700"
+                          className="text-muted-foreground hover:text-foreground transition-colors"
                           onClick={() => handleEditClick(claim.claimId)}
                         >
                           <Edit className="h-4 w-4" />
@@ -231,7 +231,7 @@ export default function RecentClaims() {
                       ) : null}
                       {claim.status === "rejected" ? (
                         <button
-                          className="text-neutral-500 hover:text-neutral-700"
+                          className="text-muted-foreground hover:text-foreground transition-colors"
                           onClick={() => handleCopyClick(claim.claimId)}
                         >
                           <CopyIcon className="h-4 w-4" />
@@ -243,7 +243,7 @@ export default function RecentClaims() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-neutral-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-muted-foreground">
                   No claims found
                 </td>
               </tr>
@@ -251,21 +251,21 @@ export default function RecentClaims() {
           </tbody>
         </table>
       </div>
-      <div className="px-6 py-4 border-t border-neutral-200 flex items-center justify-between">
-        <div className="text-sm text-neutral-500">
+      <div className="px-6 py-4 border-t border-border/30 flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
           Showing <span className="font-medium">1</span> to{" "}
           <span className="font-medium">{filteredClaims.length}</span> of{" "}
           <span className="font-medium">{claimsArray.length || 0}</span> claims
         </div>
         <div className="flex space-x-2">
           <button
-            className="px-3 py-1 border border-neutral-200 rounded-md text-neutral-500 hover:bg-neutral-50 disabled:opacity-50"
+            className="px-3 py-1 border border-border/40 rounded-md text-muted-foreground hover:bg-primary/5 disabled:opacity-50 transition-colors"
             disabled
           >
             Previous
           </button>
           <button
-            className="px-3 py-1 border border-neutral-200 rounded-md text-neutral-500 hover:bg-neutral-50"
+            className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-md text-primary hover:bg-primary/20 transition-colors"
           >
             Next
           </button>
