@@ -1,6 +1,16 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// Expense Types
+export const ClaimTypes = {
+  TRAVEL: "travel",
+  BUSINESS_PROMOTION: "business_promotion",
+  CONVEYANCE: "conveyance",
+  MOBILE_BILL: "mobile_bill",
+  RELOCATION: "relocation",
+  OTHER: "other",
+} as const;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

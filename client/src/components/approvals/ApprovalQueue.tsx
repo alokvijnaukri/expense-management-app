@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatCurrency, formatDate, getClaimTypeName } from "@/lib/utils";
+import ExpenseTypeFilter from "@/components/claims/ExpenseTypeFilter";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ export default function ApprovalQueue() {
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedExpenseType, setSelectedExpenseType] = useState<string | null>(null);
   
   // Safe formatting helper functions to prevent undefined errors
   const safeFormatCurrency = (amount: any) => {
@@ -341,13 +343,23 @@ export default function ApprovalQueue() {
         </TabsList>
         
         <TabsContent value="pending">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h3 className="text-lg font-medium">Pending Claims ({claimsForApproval?.length || 0})</h3>
+            <ExpenseTypeFilter 
+              selectedType={selectedExpenseType} 
+              onTypeChange={setSelectedExpenseType}
+            />
+          </div>
+
           {isLoadingApprovals ? (
             <div className="text-center py-8">
               <p className="text-neutral-500">Loading approval queue...</p>
             </div>
           ) : claimsForApproval && claimsForApproval.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {claimsForApproval.map((claim: any) => (
+              {claimsForApproval
+                .filter(claim => !selectedExpenseType || claim.type === selectedExpenseType)
+                .map((claim: any) => (
                 <Card key={claim.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -399,13 +411,23 @@ export default function ApprovalQueue() {
         </TabsContent>
         
         <TabsContent value="history">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h3 className="text-lg font-medium">Approval History ({approvalHistory?.length || 0})</h3>
+            <ExpenseTypeFilter 
+              selectedType={selectedExpenseType} 
+              onTypeChange={setSelectedExpenseType}
+            />
+          </div>
+
           {isLoadingHistory ? (
             <div className="text-center py-8">
               <p className="text-neutral-500">Loading approval history...</p>
             </div>
           ) : approvalHistory && approvalHistory.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {approvalHistory.map((claim: any) => (
+              {approvalHistory
+                .filter(claim => !selectedExpenseType || claim.type === selectedExpenseType)
+                .map((claim: any) => (
                 <Card key={claim.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
