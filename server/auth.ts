@@ -57,8 +57,9 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      // Set secure cookie only when using HTTPS in production
+      secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     }
   };
 
@@ -147,7 +148,11 @@ export function setupAuth(app: Express) {
       req.login(user, (err) => {
         if (err) {
           console.error("Session login error:", err);
-          return next(err);
+          // More detailed error response for session-related issues
+          return res.status(500).json({ 
+            message: "Session initialization failed", 
+            details: process.env.NODE_ENV === "development" ? err.message : undefined 
+          });
         }
         
         console.log("User successfully logged in:", user.username);
