@@ -7,13 +7,7 @@ import { formatCurrency, formatDate, getClaimTypeName, getClaimTypeIcon } from "
 import { useToast } from "@/hooks/use-toast";
 import { Eye, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import ExpenseTypeFilter from "@/components/claims/ExpenseTypeFilter";
 import {
   Card,
   CardContent,
@@ -29,7 +23,7 @@ export default function RejectedClaims() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
-  const [claimTypeFilter, setClaimTypeFilter] = useState("all");
+  const [claimTypeFilter, setClaimTypeFilter] = useState<string | null>(null);
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -81,7 +75,7 @@ export default function RejectedClaims() {
   const filteredClaims = claims
     ? claims.filter(
         (claim: any) =>
-          claimTypeFilter === "all" || claim.type === claimTypeFilter
+          !claimTypeFilter || claim.type === claimTypeFilter
       )
     : [];
 
@@ -95,23 +89,10 @@ export default function RejectedClaims() {
           </p>
         </div>
         <div className="mt-4 md:mt-0">
-          <Select
-            defaultValue="all"
-            onValueChange={setClaimTypeFilter}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Claim Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Claim Types</SelectItem>
-              <SelectItem value="travel">Travel</SelectItem>
-              <SelectItem value="business_promotion">Business Promotion</SelectItem>
-              <SelectItem value="conveyance">Conveyance</SelectItem>
-              <SelectItem value="mobile_bill">Mobile Bill</SelectItem>
-              <SelectItem value="relocation">Relocation</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
+          <ExpenseTypeFilter 
+            selectedType={claimTypeFilter} 
+            onTypeChange={setClaimTypeFilter}
+          />
         </div>
       </div>
 
