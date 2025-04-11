@@ -44,7 +44,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       name: "Pending Claims",
       path: "/pending-claims",
       icon: <ClockIcon className="h-5 w-5 mr-3" />,
-      badge: 3,
+      badge: 36,
       roles: ["employee", "manager", "finance", "admin"],
     },
     {
@@ -65,7 +65,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       name: "Approval Queue",
       path: "/approval-queue",
       icon: <LayersIcon className="h-5 w-5 mr-3" />,
-      badge: 5,
+      badge: 1,
       roles: ["manager", "finance", "admin"],
     },
     {
