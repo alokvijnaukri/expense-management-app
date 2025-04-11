@@ -17,8 +17,15 @@ export default function ExpenseBreakdown() {
   const { user } = useAuth();
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["/api/claims", "expense-breakdown"],
+    queryFn: async () => {
+      const res = await fetch("/api/claims");
+      if (!res.ok) throw new Error("Failed to fetch claims");
+      const data = await res.json();
+      console.log("ExpenseBreakdown data:", data);
+      return data;
+    },
+    enabled: true,
   });
 
   // Prepare data for the chart

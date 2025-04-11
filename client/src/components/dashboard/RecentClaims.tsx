@@ -23,8 +23,14 @@ export default function RecentClaims() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["/api/claims"],
+    queryFn: async () => {
+      const res = await fetch("/api/claims");
+      if (!res.ok) throw new Error("Failed to fetch claims");
+      const data = await res.json();
+      console.log("RecentClaims data:", data);
+      return data;
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });

@@ -17,8 +17,15 @@ export default function Dashboard() {
   const [_, navigate] = useLocation();
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["/api/claims"],
+    queryFn: async () => {
+      const res = await fetch("/api/claims");
+      if (!res.ok) throw new Error("Failed to fetch claims");
+      const data = await res.json();
+      console.log("Dashboard claims response:", data);
+      return data;
+    },
+    enabled: true,
   });
 
   const handleNewClaim = () => {
@@ -37,7 +44,7 @@ export default function Dashboard() {
       rejectedCount: 0
     };
 
-    const pending = claims.filter((claim: any) => claim.status === ClaimStatus.SUBMITTED);
+    const pending = claims.filter((claim: any) => claim.status === ClaimStatus.PENDING);
     const approved = claims.filter((claim: any) => claim.status === ClaimStatus.APPROVED || claim.status === ClaimStatus.PAID);
     const rejected = claims.filter((claim: any) => claim.status === ClaimStatus.REJECTED);
 
