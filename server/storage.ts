@@ -11,7 +11,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, or, desc, sql } from "drizzle-orm";
 
 const MemoryStore = createMemoryStore(session);
 const PostgresSessionStore = connectPg(session);
@@ -418,7 +418,8 @@ export class MemStorage implements IStorage {
 
   async getClaimsForApproval(approverId: number): Promise<Claim[]> {
     return Array.from(this.claimsMap.values()).filter(
-      (claim) => claim.currentApproverId === approverId && claim.status === ClaimStatus.PENDING
+      (claim) => claim.currentApproverId === approverId && 
+      (claim.status === ClaimStatus.PENDING || claim.status === ClaimStatus.SUBMITTED)
     );
   }
 
@@ -906,10 +907,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(claims.currentApproverId, approverId),
-          or(
-            eq(claims.status, ClaimStatus.PENDING),
-            eq(claims.status, ClaimStatus.SUBMITTED)
-          )
+          sql`(${claims.status} = ${ClaimStatus.PENDING} OR ${claims.status} = ${ClaimStatus.SUBMITTED})`
         )
       );
   }
