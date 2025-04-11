@@ -60,20 +60,20 @@ export default function Dashboard() {
   }, [claims]);
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-subtle-gradient min-h-screen">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-semibold text-neutral-700">
+          <h2 className="text-3xl font-bold text-gradient leading-tight">
             Welcome back, {user?.name?.split(" ")[0] || "User"}!
           </h2>
-          <p className="text-neutral-500 mt-1">
+          <p className="text-muted-foreground mt-2 text-lg">
             Here's an overview of your expense claims
           </p>
         </div>
         <div className="mt-4 md:mt-0">
           <Button
             onClick={handleNewClaim}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="btn-gradient shadow-sm"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             New Claim
@@ -86,14 +86,14 @@ export default function Dashboard() {
         <StatCard
           title="Total Claims"
           amount={stats.total}
-          icon={<CoinsIcon className="h-5 w-5 text-primary" />}
-          iconBgColor="bg-primary bg-opacity-10"
+          icon={<CoinsIcon className="h-5 w-5 text-white" />}
+          iconBgColor="bg-gradient-to-br from-primary to-primary/80"
           footer={
             <>
-              <span className="text-secondary flex items-center">
+              <span className="text-emerald-500 flex items-center font-medium">
                 <i className="ri-arrow-up-line mr-1"></i>12%
               </span>
-              <span className="text-neutral-500 ml-2">from last month</span>
+              <span className="text-muted-foreground ml-2">from last month</span>
             </>
           }
         />
@@ -101,10 +101,10 @@ export default function Dashboard() {
         <StatCard
           title="Pending Approval"
           amount={stats.pending}
-          icon={<ClockIcon className="h-5 w-5 text-warning" />}
-          iconBgColor="bg-warning bg-opacity-10"
+          icon={<ClockIcon className="h-5 w-5 text-white" />}
+          iconBgColor="bg-gradient-to-br from-amber-400 to-amber-500"
           footer={
-            <span className="text-neutral-500">
+            <span className="text-muted-foreground/90 font-medium">
               {stats.pendingCount} claims awaiting approval
             </span>
           }
@@ -113,10 +113,10 @@ export default function Dashboard() {
         <StatCard
           title="Approved"
           amount={stats.approved}
-          icon={<CheckIcon className="h-5 w-5 text-secondary" />}
-          iconBgColor="bg-secondary bg-opacity-10"
+          icon={<CheckIcon className="h-5 w-5 text-white" />}
+          iconBgColor="bg-gradient-to-br from-emerald-400 to-emerald-500"
           footer={
-            <span className="text-neutral-500">
+            <span className="text-muted-foreground/90 font-medium">
               {stats.approvedCount} claims approved
             </span>
           }
@@ -125,15 +125,15 @@ export default function Dashboard() {
         <StatCard
           title="Rejected"
           amount={stats.rejected}
-          icon={<XIcon className="h-5 w-5 text-danger" />}
-          iconBgColor="bg-danger bg-opacity-10"
+          icon={<XIcon className="h-5 w-5 text-white" />}
+          iconBgColor="bg-gradient-to-br from-red-400 to-red-500"
           footer={
             <>
-              <span className="text-danger flex items-center">
+              <span className="text-red-500 flex items-center font-medium">
                 <i className="ri-arrow-down-line mr-1"></i>
                 {stats.rejectedCount}
               </span>
-              <span className="text-neutral-500 ml-2">claims rejected</span>
+              <span className="text-muted-foreground ml-2">claims rejected</span>
             </>
           }
         />

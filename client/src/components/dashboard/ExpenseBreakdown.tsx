@@ -59,9 +59,9 @@ export default function ExpenseBreakdown() {
   const chartData = prepareChartData();
 
   return (
-    <div className="bg-white rounded-lg shadow-sm lg:col-span-2">
-      <div className="p-6 border-b border-neutral-200">
-        <h3 className="text-lg font-semibold text-neutral-700">
+    <div className="gradient-card lg:col-span-2">
+      <div className="p-6 border-b border-border/50">
+        <h3 className="text-lg font-bold text-gradient">
           Expense Breakdown
         </h3>
       </div>
@@ -69,7 +69,7 @@ export default function ExpenseBreakdown() {
         <div className="h-80">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
-              <p className="text-neutral-400">Loading chart data...</p>
+              <p className="text-muted-foreground animate-pulse">Loading chart data...</p>
             </div>
           ) : chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -77,22 +77,41 @@ export default function ExpenseBreakdown() {
                 data={chartData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/30)" />
+                <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground)/80)' }} />
+                <YAxis tick={{ fill: 'hsl(var(--foreground)/80)' }} />
                 <Tooltip 
                   formatter={(value) => [`₹${value}`, undefined]}
                   labelFormatter={(name) => `Category: ${name}`}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    borderColor: 'hsl(var(--border)/50)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
+                  }}
                 />
-                <Legend />
-                <Bar dataKey="claimed" name="Claimed Amount" fill="hsl(var(--chart-1))" />
-                <Bar dataKey="approved" name="Approved Amount" fill="hsl(var(--chart-2))" />
+                <Legend 
+                  wrapperStyle={{ paddingTop: 20 }}
+                  formatter={(value) => <span className="text-foreground/90">{value}</span>}
+                />
+                <Bar 
+                  dataKey="claimed" 
+                  name="Claimed Amount" 
+                  fill="hsl(var(--chart-1))" 
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="approved" 
+                  name="Approved Amount" 
+                  fill="hsl(var(--chart-2))" 
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-neutral-400">
-              <span className="ri-bar-chart-2-line text-4xl mb-4"></span>
-              <p>No expense data available</p>
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+              <span className="ri-bar-chart-2-line text-4xl mb-4 opacity-50"></span>
+              <p className="font-medium">No expense data available</p>
               <p className="text-sm">Submit claims to see your expense breakdown</p>
             </div>
           )}
