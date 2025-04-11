@@ -52,7 +52,7 @@ export type ClaimType = (typeof ClaimTypes)[keyof typeof ClaimTypes];
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),  // No longer required for AD users
   name: text("name").notNull(),
   email: text("email").notNull(),
   department: text("department").notNull(),
@@ -63,12 +63,19 @@ export const users = pgTable("users", {
   businessUnit: text("business_unit").notNull(),
   role: text("role").notNull().$type<UserRole>(),
   managerId: integer("manager_id").references(() => users.id),
+  
+  // Active Directory integration fields
+  externalId: text("external_id").unique(),  // Azure AD Object ID
+  authProvider: text("auth_provider"),       // "azure_ad", "local", etc.
+  adGroups: text("ad_groups").array(),       // Azure AD groups
+  lastAdSync: timestamp("last_ad_sync"),     // When user was last synced with AD
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  lastAdSync: true, // We'll set this automatically
 });
 
 // User relations
