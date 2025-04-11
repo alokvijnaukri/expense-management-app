@@ -61,21 +61,22 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 bg-subtle-gradient min-h-screen">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 pb-6 border-b border-border/20">
         <div>
-          <h2 className="text-3xl font-bold text-gradient leading-tight">
+          <h2 className="text-4xl font-bold text-gradient leading-tight">
             Welcome back, {user?.name?.split(" ")[0] || "User"}!
           </h2>
-          <p className="text-muted-foreground mt-2 text-lg">
-            Here's an overview of your expense claims
+          <p className="text-muted-foreground mt-3 text-lg max-w-xl">
+            Here's an overview of your expense claims and approvals
           </p>
         </div>
-        <div className="mt-4 md:mt-0">
+        <div className="mt-6 md:mt-0">
           <Button
             onClick={handleNewClaim}
-            className="btn-gradient shadow-sm"
+            className="btn-gradient shadow-md px-6 py-6 rounded-xl text-base"
+            size="lg"
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-5 w-5 mr-2" />
             New Claim
           </Button>
         </div>
@@ -139,11 +140,23 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Section Title */}
+      <div className="mb-8 mt-10">
+        <h3 className="text-xl font-semibold">Claim Activity</h3>
+        <div className="h-1 w-20 bg-gradient-to-r from-primary to-primary/40 rounded mt-2"></div>
+      </div>
+      
       {/* Recent Claims */}
       <RecentClaims />
 
+      {/* Section Title */}
+      <div className="mb-8 mt-12">
+        <h3 className="text-xl font-semibold">Analytics & Insights</h3>
+        <div className="h-1 w-20 bg-gradient-to-r from-primary to-primary/40 rounded mt-2"></div>
+      </div>
+      
       {/* Claim Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         <ExpenseBreakdown />
         <ApprovalTimeline />
       </div>

@@ -9,46 +9,82 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    background-image: 
+      radial-gradient(at 100% 0%, hsla(var(--primary)/5) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(var(--primary)/5) 0px, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold text-foreground/90;
+    @apply font-bold text-foreground/90 tracking-tight;
   }
 }
 
 @layer components {
-  /* Gradient Cards */
+  /* Modern Gradient Cards */
   .gradient-card {
-    @apply relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300;
-    background: linear-gradient(to right bottom, rgb(var(--background)), rgb(var(--muted)/80));
-    border: 1px solid rgb(var(--border)/60);
+    @apply relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-all duration-300;
+    background: linear-gradient(to right bottom, rgb(var(--background)), rgb(var(--muted)/60));
+    border: 1px solid rgb(var(--border)/40);
+    backdrop-filter: blur(8px);
   }
 
   /* Soft Background Gradient */
   .bg-subtle-gradient {
-    background: linear-gradient(to bottom right, rgb(var(--background)), rgb(var(--muted)/30));
+    background: 
+      linear-gradient(to bottom right, rgb(var(--background)), rgb(var(--muted)/20)),
+      radial-gradient(at top left, hsla(var(--primary)/8), transparent 70%);
   }
   
   /* Primary Button Gradient */
   .btn-gradient {
-    @apply bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-300;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)/90));
+    @apply bg-primary text-primary-foreground shadow-md transition-all duration-300;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(calc(var(--primary-hue) - 10), 70%, 45%));
+    &:hover {
+      background: linear-gradient(135deg, hsl(var(--primary)), hsl(calc(var(--primary-hue) - 20), 75%, 40%));
+      transform: translateY(-1px);
+    }
   }
   
   /* Accent Text Gradient */
   .text-gradient {
-    @apply text-transparent bg-clip-text;
-    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary)/80));
+    @apply text-transparent bg-clip-text font-bold;
+    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(calc(var(--primary-hue) + 20), 70%, 45%));
   }
   
-  /* Navbar and Sidebar */
+  /* Modern Navbar and Sidebar */
   .nav-item-active {
     @apply bg-primary/10 text-primary font-medium;
-    border-left: 3px solid hsl(var(--primary));
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: linear-gradient(to bottom, hsl(var(--primary)), hsl(calc(var(--primary-hue) + 20), 70%, 45%));
+      border-radius: 0 4px 4px 0;
+    }
   }
 
   /* Glassy Card Effect */
   .glass-card {
-    @apply bg-white/80 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-lg shadow-sm;
+    @apply bg-white/60 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-xl shadow-sm;
+    box-shadow: 0 4px 20px -4px hsla(var(--primary)/15);
+  }
+  
+  /* Animated Hover Card */
+  .hover-card {
+    @apply transition-all duration-300;
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 20px -8px hsla(var(--primary)/15);
+    }
+  }
+  
+  /* Chart Container */
+  .chart-container {
+    @apply p-4 rounded-xl bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+    box-shadow: 0 8px 16px -6px hsla(var(--primary)/10);
   }
 }
