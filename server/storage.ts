@@ -906,7 +906,10 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(claims.currentApproverId, approverId),
-          eq(claims.status, ClaimStatus.PENDING)
+          or(
+            eq(claims.status, ClaimStatus.PENDING),
+            eq(claims.status, ClaimStatus.SUBMITTED)
+          )
         )
       );
   }
