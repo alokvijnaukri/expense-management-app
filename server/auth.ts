@@ -22,18 +22,30 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
+  // Skip comparison if either password is missing
+  if (!supplied || !stored) {
+    console.log("Password comparison failed - missing password");
+    return false;
+  }
+  
   // For demo accounts where we don't hash the password initially
   // This allows us to use plain passwords for development
-  if (!stored || !stored.includes(".")) {
-    console.log("Using plain text password comparison for demo account");
+  if (!stored.includes(".")) {
+    console.log(`Using plain text password comparison for demo account. Supplied: '${supplied}', Stored: '${stored}'`);
     return supplied === stored;
   }
   
-  // For properly hashed passwords
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    // For properly hashed passwords
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    const result = timingSafeEqual(hashedBuf, suppliedBuf);
+    return result;
+  } catch (error) {
+    console.error("Error comparing passwords:", error);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
@@ -58,13 +70,26 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`Login attempt for username: ${username}`);
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
+        
+        if (!user) {
+          console.log(`User not found: ${username}`);
+          return done(null, false, { message: "Invalid username or password" });
+        }
+        
+        console.log(`User found: ${username}, comparing passwords`);
+        const passwordMatches = await comparePasswords(password, user.password);
+        console.log(`Password comparison result: ${passwordMatches}`);
+        
+        if (!passwordMatches) {
           return done(null, false, { message: "Invalid username or password" });
         } else {
+          console.log(`Login successful for: ${username}`);
           return done(null, user);
         }
       } catch (error) {
+        console.error("Login error:", error);
         return done(error);
       }
     }),
@@ -102,13 +127,33 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log("Login request received:", req.body);
+    
+    if (!req.body.username || !req.body.password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+    
     passport.authenticate("local", (err: any, user: Express.User, info: { message: string }) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
+      if (err) {
+        console.error("Authentication error:", err);
+        return next(err);
+      }
+      
+      if (!user) {
+        console.log("Authentication failed:", info?.message);
+        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+      }
       
       req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(200).json(user);
+        if (err) {
+          console.error("Session login error:", err);
+          return next(err);
+        }
+        
+        console.log("User successfully logged in:", user.username);
+        // Remove sensitive data like password before sending response
+        const { password, ...userWithoutPassword } = user;
+        res.status(200).json(userWithoutPassword);
       });
     })(req, res, next);
   });
