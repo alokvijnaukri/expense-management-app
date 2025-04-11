@@ -34,16 +34,16 @@ export default function PendingClaims() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id],
+    queryKey: ["/api/claims", "pending"],
     queryFn: async () => {
-      const res = await fetch(`/api/claims?userId=${user?.id}`);
+      const res = await fetch(`/api/claims?status=pending`);
       if (!res.ok) throw new Error("Failed to fetch claims");
       
-      // Filter pending claims on the client side
-      const allClaims = await res.json();
-      return allClaims.filter((claim: any) => claim.status === ClaimStatus.SUBMITTED);
+      const data = await res.json();
+      console.log("Pending claims response:", data);
+      return data;
     },
-    enabled: !!user?.id,
+    enabled: true,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchInterval: 5000, // Refetch data every 5 seconds

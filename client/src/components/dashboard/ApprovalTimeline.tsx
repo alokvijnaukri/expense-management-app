@@ -7,8 +7,15 @@ export default function ApprovalTimeline() {
   const { user } = useAuth();
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["/api/claims", "approval-timeline"],
+    queryFn: async () => {
+      const res = await fetch("/api/claims");
+      if (!res.ok) throw new Error("Failed to fetch claims");
+      const data = await res.json();
+      console.log("ApprovalTimeline data:", data);
+      return data;
+    },
+    enabled: true,
   });
 
   // Sort and filter claims for the timeline
@@ -38,6 +45,7 @@ export default function ApprovalTimeline() {
       case "draft":
         return "Draft saved";
       case "submitted":
+      case "pending":
         return "Awaiting manager approval";
       case "approved":
         return claim.approvedAmount !== undefined
@@ -59,6 +67,7 @@ export default function ApprovalTimeline() {
       case "draft":
         return "text-neutral-500";
       case "submitted":
+      case "pending":
         return "text-warning";
       case "approved":
       case "paid":
@@ -111,7 +120,7 @@ export default function ApprovalTimeline() {
                 <div>
                   <h4 className="text-sm font-medium text-neutral-700">
                     {getClaimTypeName(claim.type)}{" "}
-                    {claim.status === "submitted"
+                    {claim.status === "submitted" || claim.status === "pending"
                       ? "Submitted"
                       : claim.status.charAt(0).toUpperCase() +
                         claim.status.slice(1)}
