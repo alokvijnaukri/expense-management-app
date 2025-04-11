@@ -75,35 +75,53 @@ export default function ExpenseBreakdown() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+                barGap={4}
+                barSize={32}
+                className="drop-shadow-sm"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/30)" />
-                <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground)/80)' }} />
-                <YAxis tick={{ fill: 'hsl(var(--foreground)/80)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/20)" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fill: 'hsl(var(--foreground)/80)' }}
+                  axisLine={{ stroke: 'hsl(var(--border)/30)' }}
+                  tickLine={{ stroke: 'hsl(var(--border)/30)' }}
+                />
+                <YAxis 
+                  tick={{ fill: 'hsl(var(--foreground)/80)' }} 
+                  axisLine={{ stroke: 'hsl(var(--border)/30)' }}
+                  tickLine={{ stroke: 'hsl(var(--border)/30)' }}
+                  tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
+                />
                 <Tooltip 
-                  formatter={(value) => [`₹${value}`, undefined]}
+                  formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, undefined]}
                   labelFormatter={(name) => `Category: ${name}`}
                   contentStyle={{ 
-                    backgroundColor: 'hsl(var(--background))', 
-                    borderColor: 'hsl(var(--border)/50)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
+                    backgroundColor: 'hsl(var(--card))', 
+                    borderColor: 'hsl(var(--border)/40)',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
+                    padding: '12px 16px',
+                    fontWeight: 500
                   }}
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
                 />
                 <Legend 
                   wrapperStyle={{ paddingTop: 20 }}
-                  formatter={(value) => <span className="text-foreground/90">{value}</span>}
+                  formatter={(value) => <span className="text-foreground/90 font-medium">{value}</span>}
+                  iconType="circle"
+                  iconSize={8}
                 />
                 <Bar 
                   dataKey="claimed" 
                   name="Claimed Amount" 
-                  fill="hsl(var(--chart-1))" 
+                  fill="hsl(262, 80%, 50%)" 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="approved" 
                   name="Approved Amount" 
-                  fill="hsl(var(--chart-2))" 
+                  fill="hsl(145, 70%, 50%)" 
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
