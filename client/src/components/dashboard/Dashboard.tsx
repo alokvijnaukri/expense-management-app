@@ -23,6 +23,12 @@ export default function Dashboard() {
       if (!res.ok) throw new Error("Failed to fetch claims");
       const data = await res.json();
       console.log("Dashboard claims response:", data);
+      // Check the first claim to log its status value
+      if (data && data.length > 0) {
+        console.log("First claim status:", data[0].status);
+        console.log("Status comparison:", data[0].status === ClaimStatus.APPROVED);
+        console.log("ClaimStatus values:", ClaimStatus);
+      }
       return data;
     },
     enabled: true,
@@ -44,9 +50,10 @@ export default function Dashboard() {
       rejectedCount: 0
     };
 
-    const pending = claims.filter((claim: any) => claim.status === ClaimStatus.PENDING);
-    const approved = claims.filter((claim: any) => claim.status === ClaimStatus.APPROVED || claim.status === ClaimStatus.PAID);
-    const rejected = claims.filter((claim: any) => claim.status === ClaimStatus.REJECTED);
+    // Fixed the status comparison issue by using lowercase values
+    const pending = claims.filter((claim: any) => claim.status === "pending");
+    const approved = claims.filter((claim: any) => claim.status === "approved" || claim.status === "paid");
+    const rejected = claims.filter((claim: any) => claim.status === "rejected");
 
     return {
       total: claims.reduce((sum: number, claim: any) => sum + (claim.totalAmount || 0), 0),
