@@ -34,15 +34,15 @@ export default function RejectedClaims() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id, "rejected"],
+    queryKey: ["/api/claims", "rejected"],
     queryFn: async () => {
-      const res = await fetch(`/api/claims?userId=${user?.id}&status=rejected`);
+      const res = await fetch(`/api/claims?status=rejected`);
       if (!res.ok) throw new Error("Failed to fetch rejected claims");
       const data = await res.json();
       console.log("Rejected claims response:", data);
       return data;
     },
-    enabled: !!user?.id,
+    enabled: true,
   });
 
   const handleViewClick = (claim: any) => {

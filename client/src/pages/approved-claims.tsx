@@ -31,13 +31,15 @@ export default function ApprovedClaims() {
   const [claimTypeFilter, setClaimTypeFilter] = useState("all");
 
   const { data: claims, isLoading } = useQuery({
-    queryKey: ["/api/claims", user?.id, "approved"],
+    queryKey: ["/api/claims", "approved"],
     queryFn: async () => {
-      const res = await fetch(`/api/claims?userId=${user?.id}&status=${ClaimStatus.APPROVED}`);
+      const res = await fetch(`/api/claims?status=approved`);
       if (!res.ok) throw new Error("Failed to fetch approved claims");
-      return res.json();
+      const data = await res.json();
+      console.log("Approved claims response:", data);
+      return data;
     },
-    enabled: !!user?.id,
+    enabled: true,
   });
 
   const handleViewClick = (claim: any) => {
