@@ -26,6 +26,9 @@ export default function ExpenseBreakdown() {
       return data;
     },
     enabled: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Refetch data every 5 seconds
   });
 
   // Prepare data for the chart

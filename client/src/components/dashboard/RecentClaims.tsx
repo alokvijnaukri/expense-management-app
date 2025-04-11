@@ -33,6 +33,7 @@ export default function RecentClaims() {
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: 5000, // Refetch data every 5 seconds
   });
 
   const handleViewClick = (claimId: string) => {

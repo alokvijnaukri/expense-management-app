@@ -21,7 +21,7 @@ export default function StatCard({
       <div className="flex justify-between mb-4">
         <div>
           <p className="text-neutral-500 text-sm font-medium">{title}</p>
-          <h3 className="text-2xl font-bold text-gradient">{formatCurrency(amount)}</h3>
+          <h3 className="text-2xl font-bold text-foreground">{formatCurrency(amount)}</h3>
         </div>
         <div
           className={cn(
