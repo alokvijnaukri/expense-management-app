@@ -26,15 +26,42 @@ export async function apiRequest(
   const baseUrl = getBaseApiUrl();
   const fullUrl = `${baseUrl}${url}`;
   
+  console.log(`Making API request: ${method} ${fullUrl}`);
+  
   try {
     const res = await fetch(fullUrl, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        // Add cache-busting header to prevent browser caching
+        "Cache-Control": "no-cache, no-store",
+        "Pragma": "no-cache"
+      },
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
+      // Force reload from server, not from cache
+      cache: "no-store",
     });
 
-    await throwIfResNotOk(res);
+    if (!res.ok) {
+      console.error(`API error response: ${method} ${fullUrl} - Status: ${res.status}`);
+      
+      // For login-related errors, add more detailed logging
+      if (url.includes('/api/login') || url.includes('/api/user')) {
+        console.error(`Auth error details: ${res.statusText}`);
+        // Try to parse and log the response body for debugging
+        try {
+          const errorText = await res.text();
+          console.error(`Error response body: ${errorText}`);
+          throw new Error(`${res.status}: ${errorText || res.statusText}`);
+        } catch (textError) {
+          throw new Error(`${res.status}: ${res.statusText}`);
+        }
+      } else {
+        await throwIfResNotOk(res);
+      }
+    }
+    
     return res;
   } catch (error) {
     console.error(`API request failed: ${method} ${fullUrl}`, error);
@@ -51,17 +78,47 @@ export const getQueryFn: <T>(options: {
     const baseUrl = getBaseApiUrl();
     const fullUrl = `${baseUrl}${queryKey[0]}`;
     
+    console.log(`Making query request: GET ${fullUrl}`);
+    
     try {
       const res = await fetch(fullUrl, {
+        headers: {
+          // Add cache-busting headers
+          "Cache-Control": "no-cache, no-store",
+          "Pragma": "no-cache"
+        },
         credentials: "include",
+        // Prevent browser caching
+        cache: "no-store"
       });
 
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
+      if (res.status === 401) {
+        console.log(`Authentication required for: ${fullUrl}`);
+        if (unauthorizedBehavior === "returnNull") {
+          return null;
+        }
       }
 
-      await throwIfResNotOk(res);
-      return await res.json();
+      if (!res.ok) {
+        console.error(`Query error response: GET ${fullUrl} - Status: ${res.status}`);
+        
+        // Add special handling for auth-related endpoints for better debugging
+        if (queryKey[0].includes('/api/user')) {
+          console.error(`Auth query error details: ${res.statusText}`);
+          try {
+            const errorText = await res.text();
+            console.error(`Error response body: ${errorText}`);
+            throw new Error(`${res.status}: ${errorText || res.statusText}`);
+          } catch (textError) {
+            throw new Error(`${res.status}: ${res.statusText}`);
+          }
+        } else {
+          await throwIfResNotOk(res);
+        }
+      }
+      
+      const data = await res.json();
+      return data;
     } catch (error) {
       console.error(`Query failed: ${fullUrl}`, error);
       throw error;

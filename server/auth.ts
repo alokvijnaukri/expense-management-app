@@ -49,6 +49,12 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Determine if we should use secure cookies based on environment variables
+  // SECURE_COOKIES=false should be used when running on HTTP (not HTTPS) in production
+  const useSecureCookies = process.env.SECURE_COOKIES === "true";
+  
+  console.log(`Auth setup - Environment: ${process.env.NODE_ENV || 'development'}, Secure cookies: ${useSecureCookies ? 'yes' : 'no'}`);
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
@@ -57,9 +63,8 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       httpOnly: true,
-      // Set secure cookie only when using HTTPS in production
-      secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: useSecureCookies, // Only set secure=true if explicitly requested
+      sameSite: useSecureCookies ? "none" : "lax", // 'none' is required for cross-site cookies when secure=true
     }
   };
 
