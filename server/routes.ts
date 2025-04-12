@@ -138,43 +138,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/claims", async (req: Request, res: Response) => {
     try {
-      // Validate the claim data
-      const newClaimData = insertClaimSchema.parse(req.body);
-      
-      // Additional validation based on claim type
-      const { type, details } = newClaimData;
+      // Check if this is a draft claim - we'll handle validation differently
+      const isDraft = req.body.status === 'draft';
+      console.log(`Processing ${isDraft ? 'draft' : 'submitted'} claim`);
       
       try {
-        switch (type) {
-          case 'travel':
-            travelExpenseSchema.parse(details);
-            break;
-          case 'business_promotion':
-            businessPromotionSchema.parse(details);
-            break;
-          case 'conveyance':
-            conveyanceClaimSchema.parse(details);
-            break;
-          case 'mobile_bill':
-            mobileBillSchema.parse(details);
-            break;
-          case 'relocation':
-            relocationExpenseSchema.parse(details);
-            break;
-          case 'other':
-            otherClaimsSchema.parse(details);
-            break;
-          default:
-            throw new Error(`Invalid claim type: ${type}`);
+        // Validate the claim data with appropriate schema
+        const newClaimData = insertClaimSchema.parse(req.body);
+        
+        // For drafts, we skip the detailed validation since users might save incomplete forms
+        if (!isDraft) {
+          // Only validate details for non-draft claims
+          const { type, details } = newClaimData;
+          
+          if (!details) {
+            throw new Error("Claim details are required for non-draft claims");
+          }
+          
+          switch (type) {
+            case 'travel':
+              travelExpenseSchema.parse(details);
+              break;
+            case 'business_promotion':
+              businessPromotionSchema.parse(details);
+              break;
+            case 'conveyance':
+              conveyanceClaimSchema.parse(details);
+              break;
+            case 'mobile_bill':
+              mobileBillSchema.parse(details);
+              break;
+            case 'relocation':
+              relocationExpenseSchema.parse(details);
+              break;
+            case 'other':
+              otherClaimsSchema.parse(details);
+              break;
+            default:
+              throw new Error(`Invalid claim type: ${type}`);
+          }
+        } else {
+          console.log("Draft claim - skipping detailed validation");
         }
       } catch (error) {
+        console.error("Validation error:", error);
         if (error instanceof ZodError) {
           return res.status(400).json({ 
             message: "Invalid claim details", 
             errors: formatZodError(error) 
           });
         }
-        throw error;
+        return res.status(400).json({ 
+          message: error.message || "Invalid claim data"
+        });
       }
       
       // Handle approval flow based on org hierarchy
