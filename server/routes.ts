@@ -140,16 +140,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Check if this is a draft claim - we'll handle validation differently
       const isDraft = req.body.status === 'draft';
-      console.log(`Processing ${isDraft ? 'draft' : 'submitted'} claim`);
+      console.log(`Processing ${isDraft ? 'draft' : 'submitted'} claim with data:`, 
+        JSON.stringify({
+          ...req.body,
+          details: req.body.details ? '(data present)' : '(missing)'
+        })
+      );
       
+      // Make sure all required fields are present for the schema validation
+      if (isDraft) {
+        // For drafts, ensure we have minimal required fields
+        if (!req.body.userId) req.body.userId = req.user?.id;
+        if (!req.body.totalAmount) req.body.totalAmount = 0;
+        if (!req.body.details) req.body.details = {};
+      }
+      
+      let validatedData;
       try {
-        // Validate the claim data with appropriate schema
-        const newClaimData = insertClaimSchema.parse(req.body);
+        // Validate the claim data with the schema
+        validatedData = insertClaimSchema.parse(req.body);
+        console.log("Basic validation passed");
         
-        // For drafts, we skip the detailed validation since users might save incomplete forms
+        // Only perform detailed validation for non-draft claims
         if (!isDraft) {
-          // Only validate details for non-draft claims
-          const { type, details } = newClaimData;
+          const { type, details } = validatedData;
           
           if (!details) {
             throw new Error("Claim details are required for non-draft claims");
@@ -178,9 +192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               throw new Error(`Invalid claim type: ${type}`);
           }
         } else {
-          console.log("Draft claim - skipping detailed validation");
+          console.log("Draft claim - detailed validation skipped");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Validation error:", error);
         if (error instanceof ZodError) {
           return res.status(400).json({ 
@@ -194,22 +208,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Handle approval flow based on org hierarchy
-      const user = await storage.getUser(newClaimData.userId);
+      const user = await storage.getUser(validatedData.userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
       // Set current approver based on organizational hierarchy
-      let currentApproverId = null;
-      let nextApproverId = null;
+      let currentApproverId: number | null = null;
+      let nextApproverId: number | null = null;
       
-      if (newClaimData.status === ClaimStatus.SUBMITTED) {
+      if (validatedData.status === ClaimStatus.SUBMITTED) {
         // Get the next approver from org hierarchy
         const nextApprover = await storage.getNextApprover(
-          newClaimData.userId,
+          validatedData.userId,
           user.department,
           user.businessUnit,
-          newClaimData.totalAmount
+          validatedData.totalAmount
         );
         
         if (nextApprover) {
@@ -219,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const approvalChain = await storage.getApprovalChain(
             user.department,
             user.businessUnit,
-            newClaimData.totalAmount
+            validatedData.totalAmount
           );
           
           // If there's more than one approver in the chain,
@@ -236,20 +250,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create the claim
       const claim = await storage.createClaim({
-        ...newClaimData,
+        ...validatedData,
         currentApproverId
       });
       
       // If claim is submitted, create an approval record with the appropriate approval level
       if (claim.status === ClaimStatus.SUBMITTED && currentApproverId) {
-        // Determine approval level based on amount
+        // Determine approval level
         let approvalLevel = ApprovalLevels.MANAGER;
         
-        if (newClaimData.totalAmount > 50000) {
+        if (validatedData.totalAmount > 50000) {
           approvalLevel = ApprovalLevels.CXO;
-        } else if (newClaimData.totalAmount > 20000) {
+        } else if (validatedData.totalAmount > 20000) {
           approvalLevel = ApprovalLevels.DIRECTOR;
-        } else if (newClaimData.totalAmount > 5000) {
+        } else if (validatedData.totalAmount > 5000) {
           approvalLevel = ApprovalLevels.FINANCE;
         }
         
