@@ -19,9 +19,12 @@ if (!process.env.DATABASE_URL) {
 const dbUrl = process.env.DATABASE_URL;
 console.log('Connecting to database...');
 
-// Create connection pool with default settings
+// Create connection pool with SSL setting to ignore certificate validation issues
 export const pool = new Pool({ 
   connectionString: dbUrl,
+  ssl: {
+    rejectUnauthorized: false, // This allows connections despite certificate hostname mismatches
+  }
 });
 
 // Initialize Drizzle ORM with our schema
