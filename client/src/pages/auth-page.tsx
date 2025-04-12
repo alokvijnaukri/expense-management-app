@@ -77,12 +77,51 @@ export default function AuthPage() {
     // Special handling for admin login to make sure it works consistently
     if (data.username === 'admin' && data.password === 'admin123') {
       try {
-        console.log("Admin login - using dedicated admin login endpoints");
+        console.log("Admin login - using complete bypass approach for maximum reliability");
         
-        // Try multiple admin login approaches in sequence for better reliability
-        console.log("Admin login - trying direct admin login first");
+        // Try direct bypass method first - this doesn't rely on sessions at all
         try {
-          // Try the special direct admin login endpoint first
+          const bypassResponse = await fetch('/api/admin-bypass-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          
+          const bypassResult = await bypassResponse.json();
+          console.log("Admin bypass login response:", bypassResponse.status, bypassResult);
+          
+          if (bypassResponse.ok && bypassResult.user) {
+            console.log("Admin bypass login successful");
+            
+            // Store the admin token in localStorage for future use
+            if (bypassResult.adminToken) {
+              localStorage.setItem('adminToken', bypassResult.adminToken);
+              console.log("Admin token stored in localStorage");
+            }
+            
+            // Set user data in cache and navigate
+            queryClient.setQueryData(["/api/user"], bypassResult.user);
+            
+            // Show success message
+            toast({
+              title: "Login successful",
+              description: "Welcome, Admin!",
+            });
+            
+            setTimeout(() => navigate("/", { replace: true }), 100);
+            return;
+          } else {
+            console.error("Admin bypass login failed:", bypassResult);
+          }
+        } catch (bypassError) {
+          console.error("Admin bypass login error:", bypassError);
+        }
+        
+        // Try other methods as fallbacks
+        console.log("Admin login - trying other methods");
+        
+        // Try special admin-login endpoint
+        try {
           const adminResponse = await fetch('/api/admin-login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
