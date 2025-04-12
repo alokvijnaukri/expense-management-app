@@ -143,7 +143,8 @@ export function setupAuth(app: Express) {
       // Handle fixed logins for admin and manager accounts
       // This ensures login always works even if the database connection has issues
       if (req.body.username === 'admin' && req.body.password === 'admin123') {
-        const adminUser = {
+        // Create a full user object compatible with the User type
+        const adminUser: Express.User = {
           id: 1,
           username: 'admin',
           name: 'Admin User',
@@ -155,6 +156,8 @@ export function setupAuth(app: Express) {
           band: 'B5',
           businessUnit: 'IT',
           role: 'admin',
+          managerId: null,
+          password: 'admin123', // Password is needed for the type but won't be sent to client
           createdAt: new Date()
         };
         
@@ -164,13 +167,16 @@ export function setupAuth(app: Express) {
             return res.status(500).json({ message: "Session initialization failed" });
           }
           console.log("Admin logged in via direct authentication");
-          return res.status(200).json(adminUser);
+          // Remove sensitive data like password before sending response
+          const { password, ...userWithoutPassword } = adminUser;
+          return res.status(200).json(userWithoutPassword);
         });
         return;
       }
       
       if (req.body.username === 'manager' && req.body.password === 'manager123') {
-        const managerUser = {
+        // Create a full user object compatible with the User type
+        const managerUser: Express.User = {
           id: 3,
           username: 'manager',
           name: 'John Manager',
@@ -183,6 +189,7 @@ export function setupAuth(app: Express) {
           businessUnit: 'Technology',
           role: 'manager',
           managerId: 2,
+          password: 'manager123', // Password is needed for the type but won't be sent to client
           createdAt: new Date()
         };
         
@@ -192,7 +199,9 @@ export function setupAuth(app: Express) {
             return res.status(500).json({ message: "Session initialization failed" });
           }
           console.log("Manager logged in via direct authentication");
-          return res.status(200).json(managerUser);
+          // Remove sensitive data like password before sending response
+          const { password, ...userWithoutPassword } = managerUser;
+          return res.status(200).json(userWithoutPassword);
         });
         return;
       }

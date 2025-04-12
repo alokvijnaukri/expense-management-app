@@ -147,52 +147,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
       
-      // Make sure all required fields are present for the schema validation
+      // For drafts, use much more lenient validation
       if (isDraft) {
-        // For drafts, ensure we have minimal required fields
-        if (!req.body.userId) req.body.userId = req.user?.id;
-        if (!req.body.totalAmount) req.body.totalAmount = 0;
-        if (!req.body.details) req.body.details = {};
+        // Build a minimal valid draft claim object
+        const draftClaimData = {
+          userId: req.body.userId || (req.user?.id as number),
+          claimId: req.body.claimId,
+          type: req.body.type || 'other',
+          status: 'draft',
+          totalAmount: req.body.totalAmount || 0,
+          details: req.body.details || {},
+          notes: req.body.notes || null,
+          currentApproverId: null,
+        };
+        
+        console.log("Creating draft claim with:", draftClaimData);
+        
+        try {
+          // Create the claim with minimal validation
+          const claim = await storage.createClaim(draftClaimData);
+          return res.status(201).json(claim);
+        } catch (error: any) {
+          console.error("Error creating draft claim:", error);
+          return res.status(500).json({ message: "Failed to save draft claim", error: error.message });
+        }
       }
       
+      // For submitted claims, proceed with full validation
       let validatedData;
       try {
         // Validate the claim data with the schema
         validatedData = insertClaimSchema.parse(req.body);
         console.log("Basic validation passed");
         
-        // Only perform detailed validation for non-draft claims
-        if (!isDraft) {
-          const { type, details } = validatedData;
-          
-          if (!details) {
-            throw new Error("Claim details are required for non-draft claims");
-          }
-          
-          switch (type) {
-            case 'travel':
-              travelExpenseSchema.parse(details);
-              break;
-            case 'business_promotion':
-              businessPromotionSchema.parse(details);
-              break;
-            case 'conveyance':
-              conveyanceClaimSchema.parse(details);
-              break;
-            case 'mobile_bill':
-              mobileBillSchema.parse(details);
-              break;
-            case 'relocation':
-              relocationExpenseSchema.parse(details);
-              break;
-            case 'other':
-              otherClaimsSchema.parse(details);
-              break;
-            default:
-              throw new Error(`Invalid claim type: ${type}`);
-          }
-        } else {
-          console.log("Draft claim - detailed validation skipped");
+        // Always perform detailed validation for submitted claims
+        const { type, details } = validatedData;
+        
+        if (!details) {
+          throw new Error("Claim details are required for submitted claims");
+        }
+        
+        switch (type) {
+          case 'travel':
+            travelExpenseSchema.parse(details);
+            break;
+          case 'business_promotion':
+            businessPromotionSchema.parse(details);
+            break;
+          case 'conveyance':
+            conveyanceClaimSchema.parse(details);
+            break;
+          case 'mobile_bill':
+            mobileBillSchema.parse(details);
+            break;
+          case 'relocation':
+            relocationExpenseSchema.parse(details);
+            break;
+          case 'other':
+            otherClaimsSchema.parse(details);
+            break;
+          default:
+            throw new Error(`Invalid claim type: ${type}`);
         }
       } catch (error: any) {
         console.error("Validation error:", error);
