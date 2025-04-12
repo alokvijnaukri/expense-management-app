@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -15,6 +15,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<User, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<User, Error, RegisterData>;
+  adminUser: User | null; // Add admin user from localStorage
 };
 
 type LoginData = {
@@ -41,6 +42,40 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [adminUser, setAdminUser] = useState<User | null>(null);
+  
+  // Check for admin token in localStorage
+  useEffect(() => {
+    const checkAdminToken = () => {
+      try {
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken === 'admin-special-access-token') {
+          console.log("AuthProvider - Admin token found, creating admin user");
+          const adminData: User = {
+            id: 1,
+            username: 'admin',
+            password: '', // Add empty password to satisfy type
+            name: 'Admin User',
+            email: 'admin@company.com',
+            department: 'Administration',
+            designation: 'System Administrator',
+            branch: 'Head Office',
+            eCode: 'E001',
+            band: 'B5',
+            businessUnit: 'IT',
+            role: UserRoles.ADMIN,
+            managerId: null,
+            createdAt: new Date()
+          };
+          setAdminUser(adminData);
+        }
+      } catch (error) {
+        console.error("Error checking admin token in AuthProvider:", error);
+      }
+    };
+    
+    checkAdminToken();
+  }, []);
   
   const {
     data: user,
@@ -127,10 +162,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Use either normal user or admin user from token
+  const effectiveUser = user || adminUser;
+  
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: effectiveUser,
+        adminUser,
         isLoading,
         error,
         loginMutation,
